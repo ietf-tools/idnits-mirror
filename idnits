@@ -529,6 +529,15 @@ BEGIN {
   # This applies to non-IETF streams
   bp["trust-28-dec-2009_6_b_ii_p3"] = "This document is subject to BCP 78 and the IETF Trust's Legal Provisions " "Relating to IETF Documents \\(https?://trustee\\.ietf\\.org/license-inf(o|o/)\\) " "in effect on the date of publication of this document\\.  " "Please review these documents carefully, as they describe your " "rights and restrictions with respect to this document\\.$"
   # ----------------------------------------------------------------------------------------------
+  bp["tlp6_copyright"] = "Copyright \\(c\\) \\(?[0-9][0-9][0-9][0-9]\\)?\\..+ IETF Intellectual Property " "Management Corporation and the persons identified as the document authors."
+	bp["tlp6_copyright_now"] = sprintf("Copyright \\(c\\) %s IETF Intellectual Property " "Management Corporation and the persons identified as the document authors.", year)
+  bp["tlp6_bcp_conformance"] =  bp["trust-28-dec-2009_6_a"]
+	bp["tlp6_ietf_tlp_section"] = "This document is subject to BCP 78 and the IETF IPM Technical Legal Provisions " "Relating to IETF Documents \\(https://www\\.ietf-ipm\\.org/license-inf(o|o/)\\) " "in effect on the date of publication of this document\\.  " "Please review these documents carefully, as they describe your " "rights and restrictions with respect to this document\\.  " "Code Components extracted from this document must include " "Revised BSD License text as described in Section 4.e of the " "Technical Legal Provisions and are provided without warranty as described " "in the Revised BSD License\\.$"
+	bp["tlp6_nonietf_tlp_section"] = "This document is subject to BCP 78 and the IETF IPM Technical Legal Provisions " "Relating to IETF Documents \\(https://www\\.ietf-ipm\\.org/license-inf(o|o/)\\) " "in effect on the date of publication of this document\\.  " "Please review these documents carefully, as they describe your " "rights and restrictions with respect to this document\\.$"
+	bp["tlp6_noderivatives_pubrfc"] = bp["trust-28-dec-2009_6_c_i"]
+	bp["tlp6_noderivatives_pubdraft"] = bp["trust-28-dec-2009_6_c_ii"]
+	bp["tlp6_pre5378"] = bp["trust-28-dec-2009_6_c_iii"]
+  # ----------------------------------------------------------------------------------------------
   bp["rfc2026_10_4A"] = "The IETF takes no position regarding the validity or scope of " "any intellectual property or other rights that might be claimed " "to pertain to the implementation or use of the technology " "described in this document or the extent to which any license " "under such rights might or might not be available; neither does " "it represent that it has made any effort to identify any such " "rights.  Information on the IETF's procedures with respect to " "rights in standards-track and standards-related documentation " "can be found in BCP-11.  Copies of claims of rights made " "available for publication and any assurances of licenses to " "be made available, or the result of an attempt made " "to obtain a general license or permission for the use of such " "proprietary rights by implement[oe]rs or users of this " "specification can be obtained from the IETF Secretariat.$"
   bp["rfc2026_10_4B"] = "The IETF invites any interested party to bring to its " "attention any copyrights, patents or patent applications, or " "other proprietary rights which may cover technology that may be " "required to practice this standard.  Please address the " "information to the IETF Executive Director.$"
   bp["rfc2026_10_4C_p1"] = "Copyright \\([Cc]\\) The Internet Society \\(?[0-9][0-9][0-9][0-9]\\)?.  All Rights " "Reserved.$"
@@ -1063,7 +1072,7 @@ normalized ~ /by submitting this internet-draft/ {
 
 normalized ~ /this document may not be modified/ {
   para = get_para()
-  match_para(para, "trust-28-dec-2009_6_c_i") || match_para(para, "trust-28-dec-2009_6_c_ii") || match_para(para, "rfc3978_5_2a") || match_para(para, "rfc3978_5_2ax") || match_para(para, "rfc3978_5_2b") || match_para(para, "rfc3978_5_2bx")
+  match_para(para, "tlp6_noderivatives_pubrfc") || match_para(para, "tlp6_noderivatives_pubdraft") || match_para(para, "trust-28-dec-2009_6_c_i") || match_para(para, "trust-28-dec-2009_6_c_ii") || match_para(para, "rfc3978_5_2a") || match_para(para, "rfc3978_5_2ax") || match_para(para, "rfc3978_5_2b") || match_para(para, "rfc3978_5_2bx")
 }
 
 normalized ~ /copyright ?\(c\) ?the / {
@@ -1156,17 +1165,27 @@ normalized ~ /this internet-draft is submitted to ietf in/ {
 }
 
 normalized ~ /this internet-draft is submitted in full/ {
-  para = get_para()
-  match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1") || match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1a") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_i") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_ii") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_iii")
+  para = get_para()  
+  match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pubrfc") || match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pubdraft") || match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pre5378") || match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1") || match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1a") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_i") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_ii") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_iii")
 }
 
 normalized ~ /copyright \(c\) [0-9]+ ietf trust and/ {
   if (! in_mib) {
     some_copyright = FNR
     para = get_para()
+    # This looks like a bug...
     has_some_year = match_para(para, "trust-28-dec-2009_6_b_i_p2", "trust-28-dec-2009_6_b_i_p3")
     has_some_year = match_para(para, "trust-28-dec-2009_6_b_i_p2", "trust-28-dec-2009_6_b_ii_p3")
     has_this_year = match_para(para, "trust-28-dec-2009_6_b_i_p2_now")
+  }
+}
+
+normalized ~ /copyright \(c\) [0-9]+ ietf ipmc and/ {
+  if (! in_mib) {
+    some_copyright = FNR
+    para = get_para()
+    has_some_year = match_para(para, "tlp6_copyright", "tlp6_ietf_tlp_section") || match_para(para, "tlp6_copyright", "tlp6_nonietf_tlp_section")
+    has_this_year = match_para(para, "tlp6_copyright_now")
   }
 }
 
@@ -1187,12 +1206,16 @@ normalized ~ /this document is subject to bcp 78/ {
   match_para(para, "trust-28-dec-2009_6_b_ii_p3", "trust-28-dec-2009_6_c_i")
   match_para(para, "trust-28-dec-2009_6_b_ii_p3", "trust-28-dec-2009_6_c_ii")
   match_para(para, "trust-28-dec-2009_6_b_ii_p3", "trust-28-dec-2009_6_c_iii")
+  match_para(para, "tlp6_ietf_tlp_section", "tlp6_noderivatives_pubrfc")
+  match_para(para, "tlp6_ietf_tlp_section", "tlp6_noderivatives_pubdraft")
+  match_para(para, "tlp6_ietf_tlp_section", "tlp6_pre5378")
 }
 
 normalized ~ /this document may contain material from ietf/ {
   para = get_para()
   match_para(para, "trust-12-sep-2009_6_c_iii")
   match_para(para, "trust-28-dec-2009_6_c_iii")
+  match_para(para, "tlp6_pre5378")
 }
 
 # RFC 2119 compliance
@@ -2506,71 +2529,131 @@ function report(filename)
       printf ("\n  Showing Errors (" errmark "), Flaws (" flawmark "), Warnings (" warnmark "), and Comments (" infomark ").\n")
       print ("  Errors MUST be fixed before draft submission.  Flaws SHOULD be fixed before draft submission.")
     }
-    announce("Checking boilerplate required by RFC 5378 and the IETF Trust (see https://trustee.ietf.org/license-info):")
+    announce("Checking boilerplate required by RFC 5378 and the IETF IPMC (see https://www.ietf-ipmc.org/license-info):")
     errcount = errors
     flawcount = flaws
     warncount = warnings
     commentcount = comments
-    # 12 Sep 2009 values below are valid during the post-28-dec-2009 transition
-    if (has["trust-28-dec-2009_6_a"] || has["trust-12-sep-2009_6_a"] || has["trust-28-dec-2009_6_b_i_p2"] || has["trust-28-dec-2009_6_b_i_p3"] || has["trust-28-dec-2009_6_b_ii_p3"] || has["trust-12-sep-2009_6_b_p3"]) {
-      # We have some text from the current Trust Provisions boilerplate.  Check that we don't have older
-      # boilerplate, too.
+    # 12 Sep 2009 values below were valid during the post-28-dec-2009 transition
+    has_roughly_tlp5_bits = has["trust-28-dec-2009_6_b_i_p2"] || has["trust-28-dec-2009_6_b_i_p3"] || has["trust-28-dec-2009_6_b_ii_p3"] || has["trust-12-sep-2009_6_b_p3"]
+    has_tlp6_bits = has["tlp6_copyright"] || has["tlp6_ietf_tlp_section"] || has["tlp6_nonietf_tlp_section"]
+    if (has_roughly_tlp5_bits || has_tlp6_bits || has["tlp6_bcp_conformance"]) {
+      # the bcp conformance clause (aka trust-28-dec-2009_6_a) hasn't changed between tlp5 and tlp6
+      # We are no longer allowing "trust-16-oct-2008_6_a" matches to get into this branch
+      # Check that we don't have older boilerplate, too.
+      if (has_roughly_tlp5_bits && !has_tlp6_bits) {
+        warn("The document has boilerplate roughly matching the Trust TLP 5. The IPM TLP 6 boilerplate will soon be required. See https://www.ietf-ipmc/license-info")
+      }
+      if (has_roughly_tlp5_bits && has_tlp6_bits) {
+        # has_roughly_tlp5_bits will refactor later into the sections below
+        err("The document contains boilerplate matching both the Trust TLP5 and the IPM TLP 6. See https://www.ietf-ipmc/license-info")
+        for (bpname in bp) {
+          if (bpname ~ /^trust-/) {
+            if (has[bpname] && ! (bpname ~ "_now")) {
+              newandolderr(bpname, "IETF IPM Technical Legal Provisions of Dec 2024")
+            }
+          }
+        }
+      }
       for (bpname in bp) {
         if (bpname ~ /^rfc2026/ || bpname ~ /^rfc3667/ || bpname ~ /^rfc3978/ || bpname ~ /^rfc3979/) {
           if (has[bpname] && ! (bpname ~ "_now")) {
-            newandolderr(bpname, "IETF Trust Provisions of 12 Sep 2009")
+            newandolderr(bpname, "IETF IPM Technical Legal Provisions of Dec 2024")
           }
         }
       }
-      if (! is_rfc) {
-        if (! (has["trust-28-dec-2009_6_a"] || has["trust-12-sep-2009_6_a"])) {
-          sectionerr("trust-28-dec-2009_6_a", "Notice of Compliance with BCP 78 and BCP 79 according to " "IETF Trust Provisions of 28 Dec 2009, Section 6.a " "or Provisions of 12 Sep 2009, Section 6.a")
-        }
-      }
-      if (! has["trust-28-dec-2009_6_b_i_p2"]) {
-        sectionerr("trust-28-dec-2009_6_b_i_p2", "IETF Trust Provisions of 28 Dec 2009, Section 6.b Copyright Notice")
-      }
-      if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
-        if (! (has["trust-28-dec-2009_6_b_i_p3"] || has["trust-12-sep-2009_6_b_p3"])) {
-          sectionerr("trust-28-dec-2009_6_b_i_p3", "License Notice according IETF Trust Provisions of 28 Dec 2009, Section 6.b.i or Provisions of 12 Sep 2009 Section 6.b")
-          if (has["trust-28-dec-2009_6_b_ii_p3"]) {
-            comment("It seems you're using the 'non-IETF stream' Licence Notice instead")
+      if (!has_tlp6_bits) {
+        if (! is_rfc) {
+          if (! (has["trust-28-dec-2009_6_a"] || has["trust-12-sep-2009_6_a"] )) {
+            sectionerr("trust-28-dec-2009_6_a", "Notice of Compliance with BCP 78 and BCP 79 according to " "IETF Trust Provisions of 28 Dec 2009, Section 6.a " "or Provisions of 12 Sep 2009, Section 6.a")
           }
         }
-      } else if (full_docname ~ /^draft-(iab|irtf|rfced|rfc-editor)-/) {
-        if (! (has["trust-28-dec-2009_6_b_ii_p3"] || has["trust-12-sep-2009_6_b_p3"])) {
+        if (! has["trust-28-dec-2009_6_b_i_p2"]) {
+          sectionerr("trust-28-dec-2009_6_b_i_p2", "IETF Trust Provisions of 28 Dec 2009, Section 6.b Copyright Notice")
+        }
+        if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
+          if (! (has["trust-28-dec-2009_6_b_i_p3"] || has["trust-12-sep-2009_6_b_p3"])) {
+            sectionerr("trust-28-dec-2009_6_b_i_p3", "License Notice according IETF Trust Provisions of 28 Dec 2009, Section 6.b.i or Provisions of 12 Sep 2009 Section 6.b")
+            if (has["trust-28-dec-2009_6_b_ii_p3"]) {
+              comment("It seems you're using the 'non-IETF stream' Licence Notice instead")
+            }
+          }
+        } else if (full_docname ~ /^draft-(iab|irtf|rfced|rfc-editor)-/) {
+          if (! (has["trust-28-dec-2009_6_b_ii_p3"] || has["trust-12-sep-2009_6_b_p3"])) {
+            sectionerr("trust-28-dec-2009_6_b_ii_p3", "License Notice according IETF Trust Provisions of 28 Dec 2009, Section 6.b.ii or Provisions of 12 Sep 2009 Section 6.b")
+            if (has["trust-28-dec-2009_6_b_i_p3"]) {
+              comment("It seems you're using the 'IETF stream' Licence Notice instead")
+            }
+          }
+        } else if (! (has["trust-28-dec-2009_6_b_i_p3"] || has["trust-28-dec-2009_6_b_ii_p3"] || has["trust-12-sep-2009_6_b_p3"])) {
           sectionerr("trust-28-dec-2009_6_b_ii_p3", "License Notice according IETF Trust Provisions of 28 Dec 2009, Section 6.b.ii or Provisions of 12 Sep 2009 Section 6.b")
-          if (has["trust-28-dec-2009_6_b_i_p3"]) {
-            comment("It seems you're using the 'IETF stream' Licence Notice instead")
+        }
+        # The following is just an informational note because we've emitted an error earlier:
+        if (has["trust-12-feb-2009_6_b_p3"]) {
+          note("(You're using the IETF Trust Provisions' Section 6.b License Notice from " "12 Feb 2009 rather than one of the newer Notices.  " "See https://trustee.ietf.org/license-info/.)\n")
+        }
+        if (has["trust-12-sep-2009_6_b_p3"]) {
+          err("You're using the IETF Trust Provisions' Section 6.b License Notice from " "12 Sep 2009 rather than the newer Notice from 28 Dec 2009.  " "(See https://trustee.ietf.org/license-info/)")
+        }
+        if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
+          if (has["trust-28-dec-2009_6_c_i"]) {
+            warn("The document has an IETF Trust Provisions of 28 Dec 2009, Section 6.c(i) Publication Limitation clause.")
           }
-        }
-      } else if (! (has["trust-28-dec-2009_6_b_i_p3"] || has["trust-28-dec-2009_6_b_ii_p3"] || has["trust-12-sep-2009_6_b_p3"])) {
-        sectionerr("trust-28-dec-2009_6_b_ii_p3", "License Notice according IETF Trust Provisions of 28 Dec 2009, Section 6.b.ii or Provisions of 12 Sep 2009 Section 6.b")
-      }
-      # The following is just an informational note because we've emitted an error earlier:
-      if (has["trust-12-feb-2009_6_b_p3"]) {
-        note("(You're using the IETF Trust Provisions' Section 6.b License Notice from " "12 Feb 2009 rather than one of the newer Notices.  " "See https://trustee.ietf.org/license-info/.)\n")
-      }
-      if (has["trust-12-sep-2009_6_b_p3"]) {
-        err("You're using the IETF Trust Provisions' Section 6.b License Notice from " "12 Sep 2009 rather than the newer Notice from 28 Dec 2009.  " "(See https://trustee.ietf.org/license-info/)")
-      }
-      if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
-        if (has["trust-28-dec-2009_6_c_i"]) {
-          warn("The document has an IETF Trust Provisions of 28 Dec 2009, Section 6.c(i) Publication Limitation clause.")
-        }
-        if (has["trust-28-dec-2009_6_c_ii"]) {
-          err("The document has an IETF Trust Provisions, 28 Dec 2009, Section 6.c(ii) Publication Limitation clause.")
+          if (has["trust-28-dec-2009_6_c_ii"]) {
+            err("The document has an IETF Trust Provisions, 28 Dec 2009, Section 6.c(ii) Publication Limitation clause.")
+          }
+        } else {
+          if (has["trust-28-dec-2009_6_c_i"]) {
+            comment("The document has an IETF Trust Provisions (28 Dec 2009) Section 6.c(i) Publication Limitation clause.")
+          }
+          if (has["trust-28-dec-2009_6_c_ii"]) {
+            comment("The document has an IETF Trust Provisions (28 Dec 2009) Section 6.c(ii) Publication " "Limitation clause.  If this document is intended for submission to the IESG for " "publication, this constitutes an error.")
+          }
         }
       } else {
-        if (has["trust-28-dec-2009_6_c_i"]) {
-          comment("The document has an IETF Trust Provisions (28 Dec 2009) Section 6.c(i) Publication Limitation clause.")
+        if (! is_rfc) {
+          if (!has["tlp6_bcp_conformance"]) {
+            sectionerr("tlp6_bcp_conformance", "Notice of Compliance with BCP 78 and BCP 79 according to " "IETF IPM Technical Legal Provisions of Dec 2024, Section 6.a")
+          }
         }
-        if (has["trust-28-dec-2009_6_c_ii"]) {
-          comment("The document has an IETF Trust Provisions (28 Dec 2009) Section 6.c(ii) Publication " "Limitation clause.  If this document is intended for submission to the IESG for " "publication, this constitutes an error.")
+        if (! has["tlp6_bcp_copyright"]) {
+          sectionerr("tlp6_bcp_copyright", "IETF IPM Technical Legal Provisions of Dec 2024, Section 6.b Copyright Notice")
         }
+        if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
+          if (! has["tlp6_ietf_tlp_section"]) {
+            sectionerr("tlp6_ietf_tlp_section", "License Notice according IETF IPM Technical Legal Provisions of Dec 2024, Section 6.b.i")
+            if (has["tlp6_nonietf_tlp_section"]) {
+              comment("It seems you're using the 'non-IETF stream' Licence Notice instead")
+            }
+          }
+        } else if (full_docname ~ /^draft-(iab|irtf|rfced|rfc-editor)-/) {
+          if (! has["tlp6_nonietf_tlp_section"]) {
+            sectionerr("tlp6_nonietf_tlp_section", "License Notice according IETF IPM Technical Legal Provisions of Dec 2024, Section 6.b.ii")
+            if (has["tlp6_ietf_tlp_section"]) {
+              comment("It seems you're using the 'IETF stream' Licence Notice instead")
+            }
+          }
+        } else if (! (has["tlp6_ietf_tlp_section"] || has["tlp6_nonietf_tlp_section"] )) {
+          sectionerr("tlp6_nonietf_tlp_section", "License Notice according IETF IPM Technical Legal Provisions of Dec 2024, Section 6.b.ii")
+        }
+        if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
+          if (has["tlp6_noderivatives_pubrfc"]) {
+            warn("The document has an IETF IPM Technical Legal Provisions of Dec 2024, Section 6.c(i) Publication Limitation clause.")
+          }
+          if (has["tlp6_noderivatives_pubdraft"]) {
+            err("The document has an IETF IPM Technical Legal Provisions of Dec 2024, Section 6.c(ii) Publication Limitation clause.")
+          }
+        } else {
+          if (has["tlp6_noderivatives_pubrfc"]) {
+            comment("The document has an IETF IPM Technical Legal Provisions of Dec 2024, Section 6.c(i) Publication Limitation clause.")
+          }
+          if (has["tlp6_noderivatives_pubdraft"]) {
+            comment("The document has an IETF IPM Techincal Legal Provisions of Dec 2024, Section 6.c(ii) Publication " "Limitation clause.  If this document is intended for submission to the IESG for " "publication, this constitutes an error.")
+          }          
+        } 
       }
     } else if ((has["rfc3667_5_1"] || has["rfc3978_5_1_a"] || has["rfc3978_5_1"] || has["rfc3978_5_2b"] || has["rfc3978_5_3"] || has["rfc3978_5_5"] || has["rfc3978_5_5_u4748"] || has["rfc3979_5_p1"] || has["rfc3979_5_p2"] || has["rfc3979_5_p3"])) {
-      err("It looks like you're using RFC 3978 boilerplate.  You should update this to the " "boilerplate described in the IETF Trust License Policy document (see " "https://trustee.ietf.org/license-info), which is required now.")
+      err("It looks like you're using RFC 3978 boilerplate.  You should update this to the " "boilerplate described in the IETF IPM Techincal Legal Provisions document (see " "https://www.ietf-ipmc.org/license-info), which is required now.")
       if (has["rfc3667_5_1"]) {
         olderr("rfc3667_5_1")
       }
@@ -2659,7 +2742,7 @@ function report(filename)
         }
       }
       if (has["rfc2026_lax_claim"] || has["rfc2026b_lax_claim"]) {
-        err("The document claims conformance with section 10 of RFC 2026, but uses " "some RFC 3978/3979 boilerplate.  As RFC 3978/3979 replaces section 10 of " "RFC 2026, you should not claim conformance with it if you have changed " "to using RFC 3978/3979 boilerplate.")
+        err("The document claims conformance with section 10 of RFC 2026, but uses " "some RFC 3978/3979 boilerplate.")
       }
       if (! (has["rfc3978_5_1"]) && ! is_rfc) {
         sectionerr("rfc3978_5_1", "RFC 3978 Section 5.1 IPR Disclosure Acknowledgement")
@@ -2681,7 +2764,7 @@ function report(filename)
       }
       if (! has["rfc3978_5_4_p1_u4748"]) {
         if (has["rfc3978_5_4_p1"]) {
-          err("This document has an original RFC 3978 Section 5.4 Copyright Line, " "instead of the newer IETF Trust Copyright according " "to RFC 4748.")
+          err("This document has an original RFC 3978 Section 5.4 Copyright Line")
         } else {
           sectionerr("rfc3978_5_4_p1_u4748", "RFC 3978 Section 5.4 (updated by RFC 4748) Copyright Line")
         }
@@ -2691,7 +2774,7 @@ function report(filename)
       }
       if (! has["rfc3978_5_5_u4748"]) {
         if (has["rfc3978_5_5"]) {
-          err("This document has an original RFC 3978 Section 5.5 Disclaimer, " "instead of the newer disclaimer which includes the IETF Trust according " "to RFC 4748.")
+          err("This document has an original RFC 3978 Section 5.5 Disclaimer")
         } else {
           sectionerr("rfc3978_5_5_u4748", "RFC 3978 Section 5.5 (updated by RFC 4748) Disclaimer")
         }
@@ -2712,7 +2795,7 @@ function report(filename)
         }
       }
       if (has["rfc3667_3_claim"] || (has["rfc3667_5_1"] || has["rfc3978_5_1_a"]) && ! has["rfc3978_5_1"]) {
-        err("The document uses RFC 3667 boilerplate or RFC 3978-like " "boilerplate instead of verbatim RFC 3978 boilerplate.  After 6 May 2005, " "submission of drafts without verbatim RFC 3978 boilerplate is not " "accepted.")
+        err("The document uses RFC 3667 boilerplate or RFC 3978-like " "boilerplate")
         note("The following non-3978 patterns matched text found in the document.  That text should be removed or replaced:\n")
         if (has["rfc3667_3_claim"]) {
           showsection("rfc3667_3_claim", 2)
@@ -2747,7 +2830,7 @@ function report(filename)
         }
         print ""
       }
-      err("Looks like you're using RFC 2026 boilerplate.  This must be updated to follow RFC 3978/3979, as updated by RFC 4748.")
+      err("Looks like you're using RFC 2026 boilerplate.  This must be updated to current boilerplate.")
     } else {
       if (some_copyright) {
         copyright_msg = "  Found some kind of copyright notice around line " some_copyright " but it does not match any copyright boilerplate known by this tool."
@@ -2755,10 +2838,10 @@ function report(filename)
         copyright_msg = ""
       }
       err("Cannot find the required boilerplate sections (Copyright, IPR, etc.) in this document." copyright_msg)
-      note("Expected boilerplate is as follows today (" today ") according to https://trustee.ietf.org/license-info :\n")
-      showsection("trust-28-dec-2009_6_a")
-      showsection("trust-28-dec-2009_6_b_i_p2")
-      showsection("trust-28-dec-2009_6_b_i_p3")
+      note("Expected boilerplate is as follows today (" today ") according to https://www.ietf-ipmc.org/license-info :\n")
+      showsection("tlp6_bcp_conformance")
+      showsection("tlp6_copyright")
+      showsection("tlp6_ietf_tlp_section")
     }
     if (errcount == errors && flawcount == flaws && warncount == warnings && commentcount == comments) {
       note("No issues found here.")
