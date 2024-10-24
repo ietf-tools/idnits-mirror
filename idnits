@@ -529,8 +529,8 @@ BEGIN {
   # This applies to non-IETF streams
   bp["trust-28-dec-2009_6_b_ii_p3"] = "This document is subject to BCP 78 and the IETF Trust's Legal Provisions " "Relating to IETF Documents \\(https?://trustee\\.ietf\\.org/license-inf(o|o/)\\) " "in effect on the date of publication of this document\\.  " "Please review these documents carefully, as they describe your " "rights and restrictions with respect to this document\\.$"
   # ----------------------------------------------------------------------------------------------
-  bp["tlp6_copyright"] = "Copyright \\(c\\) \\(?[0-9][0-9][0-9][0-9]\\)?\\..+ IETF Intellectual Property " "Management Corporation and the persons identified as the document authors."
-  bp["tlp6_copyright_now"] = sprintf("Copyright \\(c\\) %s IETF Intellectual Property " "Management Corporation and the persons identified as the document authors.", year)
+  bp["tlp6_copyright"] = "Copyright \\(c\\) \\(?[0-9][0-9][0-9][0-9]\\)? IETF Intellectual Property " "Management Corporation and the persons identified as the document authors. All rights reserved\\."
+  bp["tlp6_copyright_now"] = sprintf("Copyright \\(c\\) %s IETF Intellectual Property " "Management Corporation and the persons identified as the document authors. All rights reserved\\.", year)
   bp["tlp6_bcp_conformance"] =  bp["trust-28-dec-2009_6_a"]
   bp["tlp6_ietf_tlp_section"] = "This document is subject to BCP 78 and the IETF IPM Technical Legal Provisions " "Relating to IETF Documents \\(https://www\\.ietf-ipm\\.org/license-inf(o|o/)\\) " "in effect on the date of publication of this document\\.  " "Please review these documents carefully, as they describe your " "rights and restrictions with respect to this document\\.  " "Code Components extracted from this document must include " "Revised BSD License text as described in Section 4.e of the " "IETF IPM Technical Legal Provisions and are provided without warranty as described " "in the Revised BSD License\\.$"
   bp["tlp6_nonietf_tlp_section"] = "This document is subject to BCP 78 and the IETF IPM Technical Legal Provisions " "Relating to IETF Documents \\(https://www\\.ietf-ipm\\.org/license-inf(o|o/)\\) " "in effect on the date of publication of this document\\.  " "Please review these documents carefully, as they describe your " "rights and restrictions with respect to this document\\.$"
@@ -1180,7 +1180,7 @@ normalized ~ /copyright \(c\) [0-9]+ ietf trust and/ {
   }
 }
 
-normalized ~ /copyright \(c\) [0-9]+ ietf ipmc and/ {
+normalized ~ /copyright \(c\) [0-9]+ ietf intellectual property management corporation/ {
   if (! in_mib) {
     some_copyright = FNR
     para = get_para()
@@ -2616,8 +2616,8 @@ function report(filename)
             sectionerr("tlp6_bcp_conformance", "Notice of Compliance with BCP 78 and BCP 79 according to " "IETF IPM Technical Legal Provisions of Dec 2024, Section 6.a")
           }
         }
-        if (! has["tlp6_bcp_copyright"]) {
-          sectionerr("tlp6_bcp_copyright", "IETF IPM Technical Legal Provisions of Dec 2024, Section 6.b Copyright Notice")
+        if (! has["tlp6_copyright"]) {
+          sectionerr("tlp6_copyright", "IETF IPM Technical Legal Provisions of Dec 2024, Section 6.b Copyright Notice")
         }
         if (full_docname ~ /^draft-ietf/ || destcode in ietf_stream_codes) {
           if (! has["tlp6_ietf_tlp_section"]) {
