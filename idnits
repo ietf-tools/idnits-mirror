@@ -1166,7 +1166,8 @@ normalized ~ /this internet-draft is submitted to ietf in/ {
 
 normalized ~ /this internet-draft is submitted in full/ {
   para = get_para()  
-  match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pubrfc") || match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pubdraft") || match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pre5378") || match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1") || match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1a") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_i") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_ii") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_iii")
+  match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pubrfc") || match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pubdraft") || match_para(para, "tlp6_bcp_conformance", "tlp6_noderivatives_pre5378")
+  match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1") || match_para(para, "trust-28-dec-2009_6_a", "1id_guidelines_p1a") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_i") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_ii") || match_para(para, "trust-28-dec-2009_6_a", "trust-28-dec-2009_6_c_iii")
 }
 
 normalized ~ /copyright \(c\) [0-9]+ ietf trust and/ {
@@ -2542,7 +2543,7 @@ function report(filename)
       # We are no longer allowing "trust-16-oct-2008_6_a" matches to get into this branch
       # Check that we don't have older boilerplate, too.
       if (has_roughly_tlp5_bits && !has_tlp6_bits) {
-        warn("The document has boilerplate roughly matching the Trust TLP 5. The IPM TLP 6 boilerplate will soon be required. See https://www.ietf-ipmc/license-info")
+        warn("The document has boilerplate matching the Trust TLP 5. The IPM TLP 6 boilerplate will soon be required for submission. Updating now is encouraged. See https://www.ietf-ipmc/license-info")
       }
       if (has_roughly_tlp5_bits && has_tlp6_bits) {
         # has_roughly_tlp5_bits will refactor later into the sections below
