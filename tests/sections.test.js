@@ -9,7 +9,7 @@ import {
   validateReferencesSection,
   validateIANAConsiderationsSection
 } from '../lib/modules/sections.mjs'
-import { baseTXTDoc, baseXMLDoc } from './fixtures/base-doc.mjs'
+import { baseXMLDoc } from './fixtures/base-doc.mjs'
 import { cloneDeep, set, times } from 'lodash-es'
 
 expect.extend({
@@ -294,5 +294,119 @@ describe('document should have a valid IANA considerations section', () => {
       set(doc, 'data.rfc.middle.section[0].abc', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.')
       await expect(validateIANAConsiderationsSection(doc)).resolves.toContainError('INVALID_IANA_CONSIDERATIONS_SECTION_CHILD', ValidationError)
     })
+  })
+})
+
+describe('document should have a valid introduction section (TXT Document Type)', () => {
+  test('valid introduction section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      1. Introduction
+      This is the introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('missing introduction section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      1. NotAnIntroduction
+      This is not an introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toContainError(
+      'MISSING_INTRODUCTION_SECTION',
+      ValidationError
+    )
+  })
+
+  test('introduction section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      Table of Contents
+      1. Introduction...........................1
+      2. Overview...............................2
+      
+      1. Introduction
+      This is the actual  TXT flacky TEST introduction section.`
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('introduction section in TOC with spaces between dots is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      Table of Contents
+      1. Introduction . . . . . . . . . . . . . . . . . . . . 1
+      2. Overview . . . . . . . . . . . . . . . . . . . . . . 2
+      
+      1. Introduction
+      This is the actual TXT flacky TEST introduction section.`
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('empty introduction section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      1. Introduction
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toContainError(
+      'EMPTY_INTRODUCTION_SECTION',
+      ValidationError
+    )
+  })
+
+  test('missing document header or title', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: false }, title: false }
+      },
+      body: `
+      1. Introduction
+      This is the introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toContainError(
+      'INVALID_DOCUMENT_STRUCTURE',
+      ValidationError
+    )
+  })
+
+  test('introduction section with alternative names', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      1. Overview
+      This is the introduction section under an alternative name.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
   })
 })
