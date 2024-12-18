@@ -512,3 +512,98 @@ describe('document should have a valid security considerations section (TXT Docu
     )
   })
 })
+
+describe('document should have a valid author section (TXT Document Type)', () => {
+  test('valid author section with correct header', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Authors' Addresses
+      John Doe, ACME Inc.
+      Email: john.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+
+  test('missing author section in NORMAL mode', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'MISSING_AUTHOR_SECTION',
+      ValidationError
+    )
+  })
+
+  test('missing author section in FORGIVE_CHECKLIST mode', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+      'MISSING_AUTHOR_SECTION',
+      ValidationWarning
+    )
+  })
+
+  test('missing author section in SUBMISSION mode (ignored)', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.SUBMISSION })).resolves.toHaveLength(0)
+  })
+
+  test('misspelled author section header in NORMAL mode', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Authors Addresses
+      Jane Doe, ACME Inc.
+      Email: jane.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'MISSPELLED_AUTHOR_SECTION',
+      ValidationWarning
+    )
+  })
+
+  test('misspelled author section header in SUBMISSION mode (ignored)', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Authors Addresses
+      Jane Doe, ACME Inc.
+      Email: jane.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.SUBMISSION })).resolves.toHaveLength(0)
+  })
+
+  test('author section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      body: `
+      Table of Contents
+      Authors' Addresses...........................7
+
+      Authors' Addresses
+      John Doe, ACME Inc.
+      Email: john.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+})
