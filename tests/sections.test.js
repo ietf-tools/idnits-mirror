@@ -410,3 +410,105 @@ describe('document should have a valid introduction section (TXT Document Type)'
     await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
   })
 })
+
+describe('document should have a valid security considerations section (TXT Document Type)', () => {
+  test('valid security considerations section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      4. Security Considerations
+      This is the security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('missing security considerations section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      4. NotSecurityConsiderations
+      This is not the security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
+      'MISSING_SECURITY_CONSIDERATIONS_SECTION',
+      ValidationError
+    )
+  })
+
+  test('missing security considerations section (FORGIVE_CHECKLIST mode)', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      4. NotSecurityConsiderations
+      This is not the security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+      'MISSING_SECURITY_CONSIDERATIONS_SECTION',
+      ValidationWarning
+    )
+  })
+
+  test('security considerations section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      Table of Contents
+      4. Security Considerations...........................4
+      5. IANA Considerations...............................5
+      
+      4. Security Considerations
+      This is the actual security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('security considerations section in TOC with spaces between dots is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      Table of Contents
+      4. Security Considerations . . . . . . . . . . . . . . 4
+      5. IANA Considerations . . . . . . . . . . . . . . . . 5
+      
+      4. Security Considerations
+      This is the actual security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('empty security considerations section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true }
+      },
+      body: `
+      4. Security Considerations
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
+      'EMPTY_SECURITY_CONSIDERATIONS_SECTION',
+      ValidationError
+    )
+  })
+})
