@@ -105,6 +105,55 @@ describe('document should have valid IP Address mentions', () => {
         })
       ])
     })
+
+    test('Valid IPv6 documentation address', async () => {
+      const input = { type: 'txt', data: { extractedElements: { ipv4: [], ipv6: ['2001:db8::1'] } } }
+      const result = await validateIPs(input, { mode: 0 })
+      expect(result).toEqual([])
+    })
+
+    test('Invalid IPv6 address', async () => {
+      const input = { type: 'txt', data: { extractedElements: { ipv4: [], ipv6: ['1234:5678:90ab::g'] } } }
+      const result = await validateIPs(input, { mode: 0 })
+      expect(result).toEqual([
+        new ValidationWarning('INVALID_IPV6_ADDRESS', 'IPv6 address "1234:5678:90ab::g" is invalid.', {
+          ref: 'https://datatracker.ietf.org/doc/html/rfc4291',
+          text: '1234:5678:90ab::g'
+        })
+      ])
+    })
+
+    test('Non-standard IPv6 address', async () => {
+      const input = { type: 'txt', data: { extractedElements: { ipv4: [], ipv6: ['abcd::1234'] } } }
+      const result = await validateIPs(input, { mode: 0 })
+      expect(result).toEqual([
+        new ValidationWarning('NON_STANDARD_IPV6_ADDRESS', 'IPv6 address "abcd::1234" does not match documentation or standard local ranges.', {
+          ref: 'https://datatracker.ietf.org/doc/html/rfc3849',
+          text: 'abcd::1234'
+        })
+      ])
+    })
+
+    test('Mixed valid IPv4 and IPv6', async () => {
+      const input = { type: 'txt', data: { extractedElements: { ipv4: ['192.0.2.1'], ipv6: ['2001:db8::1'] } } }
+      const result = await validateIPs(input, { mode: 0 })
+      expect(result).toEqual([])
+    })
+
+    test('Mixed invalid IPv4 and IPv6', async () => {
+      const input = { type: 'txt', data: { extractedElements: { ipv4: ['999.999.999.999'], ipv6: ['abcd::g'] } } }
+      const result = await validateIPs(input, { mode: 0 })
+      expect(result).toEqual([
+        new ValidationWarning('INVALID_IPV4_ADDRESS', 'IPv4 address "999.999.999.999" is invalid.', {
+          ref: 'https://datatracker.ietf.org/doc/html/rfc791',
+          text: '999.999.999.999'
+        }),
+        new ValidationWarning('INVALID_IPV6_ADDRESS', 'IPv6 address "abcd::g" is invalid.', {
+          ref: 'https://datatracker.ietf.org/doc/html/rfc4291',
+          text: 'abcd::g'
+        })
+      ])
+    })
   })
 
   describe('XML Document Type', () => {
