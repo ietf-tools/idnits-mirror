@@ -13,6 +13,209 @@ expect.extend({
 })
 
 describe('document should have valid RFC2119 keywords', () => {
+  describe('validate2119Keywords (TXT Document Type)', () => {
+    test('keywords found but no boilerplate and no references', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 5 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationError(
+          'MISSING_REQLEVEL_BOILERPLATE',
+          'One or more RFC2119 keywords are present but an RFC2119 boilerplate and a reference are missing.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+
+    test('keywords found, reference found but no boilerplate', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 10 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationWarning(
+          'MISSING_REQLEVEL_BOILERPLATE',
+          'One or more RFC2119 keywords are present but an RFC2119 boilerplate is missing.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+
+    test('boilerplate present but no non-boilerplate keywords', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 15 }],
+            boilerplate2119Keywords: [{ keyword: 'MUST', line: 15 }]
+          },
+          boilerplate: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationWarning(
+          'MISSING_REQLEVEL_KEYWORDS',
+          'An RFC2119 boilerplate is present but no keywords are used in the document.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+
+    test('invalid keyword combinations found', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 8 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: [
+              { invalidKeyword: 'MUST not', line: 20, pos: 5 }
+            ]
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationComment(
+          'INCORRECT_KEYWORD_SPELLING',
+          'The keyword "MUST not" is misspelled.',
+          {
+            ref: 'https://datatracker.ietf.org/doc/html/rfc2119',
+            lines: [{ line: 20, pos: 5 }]
+          }
+        )
+      ])
+    })
+
+    test('forgive-checklist mode skips errors', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 10 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.FORGIVE_CHECKLIST })
+
+      expect(result).toEqual([
+        new ValidationWarning(
+          'MISSING_REQLEVEL_BOILERPLATE',
+          'One or more RFC2119 keywords are present but an RFC2119 boilerplate and a reference are missing.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+
+    test('missing reference with boilerplate', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 10 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationWarning('MISSING_REQLEVEL_BOILERPLATE', 'One or more RFC2119 keywords are present but an RFC2119 boilerplate is missing.', {
+          ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2'
+        })
+      ])
+    })
+  })
+
   describe('XML Document Type', () => {
     const boilerplate = `The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
       NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
