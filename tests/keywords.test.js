@@ -449,6 +449,39 @@ describe('document should have valid RFC2119 keywords', () => {
         )
       ])
     })
+
+    test('NOT RECOMMENDED used but not in boilerplate', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'NOT RECOMMENDED', line: 25 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationWarning(
+          'MISSING_NOTRECOMMENDED_IN_BOILERPLATE',
+          'The keyword NOT RECOMMENDED appears but not included in the RFC2119 boilerplate.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
   })
 
   describe('XML Document Type', () => {
