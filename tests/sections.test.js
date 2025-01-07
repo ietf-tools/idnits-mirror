@@ -481,3 +481,74 @@ describe('document should have a valid security considerations section (TXT Docu
     )
   })
 })
+
+describe('document should have a valid author section (TXT Document Type)', () => {
+  test('valid author section with correct header', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 100 } },
+        content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
+      },
+      body: `
+      Authors' Addresses
+      John Doe, ACME Inc.
+      Email: john.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+
+  test('missing author section in NORMAL mode', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
+      },
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'MISSING_AUTHOR_SECTION',
+      ValidationError
+    )
+  })
+
+  test('missing author section in FORGIVE_CHECKLIST mode', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
+      },
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+      'MISSING_AUTHOR_SECTION',
+      ValidationWarning
+    )
+  })
+
+  test('author section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 112 } },
+        content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
+      },
+      body: `
+      Table of Contents
+      Authors' Addresses...........................7
+
+      Authors' Addresses
+      John Doe, ACME Inc.
+      Email: john.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+})
