@@ -296,3 +296,118 @@ describe('document should have a valid IANA considerations section', () => {
     })
   })
 })
+
+describe('document should have a valid introduction section (TXT Document Type)', () => {
+  test('valid introduction section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, introduction: { start: 43 } },
+        content: { introduction: ['This is the introduction section.'] }
+      },
+      body: `
+      1. Introduction
+      This is the introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('missing introduction section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, introduction: { start: 0 } }
+      },
+      body: `
+      1. NotAnIntroduction
+      This is not an introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toContainError(
+      'MISSING_INTRODUCTION_SECTION',
+      ValidationError
+    )
+  })
+
+  test('introduction section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, introduction: { start: 34 } },
+        content: { introduction: ['This is the actual introduction section.'] }
+      },
+      body: `
+      Table of Contents
+      1. Introduction...........................1
+      2. Overview...............................2
+      
+      1. Introduction
+      This is the actual introduction section.`
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('empty introduction section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, introduction: { start: 12 } },
+        content: { introduction: [] }
+      },
+      body: `
+      1. Introduction
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toContainError(
+      'EMPTY_INTRODUCTION_SECTION',
+      ValidationError
+    )
+  })
+
+  test('missing document header or title', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: false }, title: false }
+      },
+      body: `
+      1. Introduction
+      This is the introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toContainError(
+      'INVALID_DOCUMENT_STRUCTURE',
+      ValidationError
+    )
+  })
+
+  test('introduction section with alternative names', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, introduction: { start: 12 } },
+        content: { introduction: ['This is the introduction section under an alternative name.'] }
+      },
+      body: `
+      1. Overview
+      This is the introduction section under an alternative name.
+      `
+    }
+    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('missing introduction section but forgiving', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, introduction: { start: 0 } }
+      },
+      body: `
+      1. NotAnIntroduction
+      This is not an introduction section.
+      `
+    }
+    await expect(validateIntroductionSection(doc, { mode: 'FORGIVE_CHECKLIST' })).resolves.toHaveLength(0)
+  })
+})
