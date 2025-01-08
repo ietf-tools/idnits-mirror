@@ -411,3 +411,144 @@ describe('document should have a valid introduction section (TXT Document Type)'
     await expect(validateIntroductionSection(doc, { mode: 'FORGIVE_CHECKLIST' })).resolves.toHaveLength(0)
   })
 })
+
+describe('document should have a valid security considerations section (TXT Document Type)', () => {
+  test('valid security considerations section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, securityConsiderations: { start: 56 } },
+        content: { securityConsiderations: ['This is the security considerations section.'] }
+      },
+      body: `
+      4. Security Considerations
+      This is the security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('missing security considerations section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, securityConsiderations: { start: 0 } }
+      },
+      body: `
+      4. NotSecurityConsiderations
+      This is not the security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
+      'MISSING_SECURITY_CONSIDERATIONS_SECTION',
+      ValidationError
+    )
+  })
+
+  test('security considerations section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, securityConsiderations: { start: 78 } },
+        content: { securityConsiderations: ['This is the actual security considerations section.'] }
+      },
+      body: `
+      Table of Contents
+      4. Security Considerations...........................4
+      5. IANA Considerations...............................5
+      
+      4. Security Considerations
+      This is the actual security considerations section.
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+  })
+
+  test('empty security considerations section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, securityConsiderations: { start: 34 } },
+        content: { securityConsiderations: [] }
+      },
+      body: `
+      4. Security Considerations
+      `
+    }
+    await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
+      'EMPTY_SECURITY_CONSIDERATIONS_SECTION',
+      ValidationError
+    )
+  })
+})
+
+describe('document should have a valid author section (TXT Document Type)', () => {
+  test('valid author section with correct header', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 100 } },
+        content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
+      },
+      body: `
+      Authors' Addresses
+      John Doe, ACME Inc.
+      Email: john.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+
+  test('missing author section in NORMAL mode', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
+      },
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'MISSING_AUTHOR_SECTION',
+      ValidationError
+    )
+  })
+
+  test('missing author section in FORGIVE_CHECKLIST mode', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
+      },
+      body: `
+      Introduction
+      This document has no author section.
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+      'MISSING_AUTHOR_SECTION',
+      ValidationWarning
+    )
+  })
+
+  test('author section in TOC is ignored', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { header: { start: true }, title: true, authorAddress: { start: 112 } },
+        content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
+      },
+      body: `
+      Table of Contents
+      Authors' Addresses...........................7
+
+      Authors' Addresses
+      John Doe, ACME Inc.
+      Email: john.doe@example.com
+      `
+    }
+    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+})
