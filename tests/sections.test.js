@@ -17,18 +17,137 @@ expect.extend({
 })
 
 describe('document should have a valid abstract section', () => {
-  // describe('TXT Document Type', () => {
-  //   test('valid abstract section', async () => {
-  //     const doc = cloneDeep(baseTXTDoc)
-  //     set(doc, 'data.rfc.front.abstract.t', 'test')
-  //     await expect(validateAbstractSection(doc)).resolves.toHaveLength(0)
-  //   })
-  //   test('missing abstract section', async () => {
-  //     const doc = cloneDeep(baseTXTDoc)
-  //     set(doc, 'data.rfc.front', {})
-  //     await expect(validateAbstractSection(doc)).resolves.toContainError('MISSING_ABSTRACT_SECTION', ValidationError)
-  //   })
-  // })
+  describe('document should have a valid abstract section (TXT Document Type)', () => {
+    test('valid abstract section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document provides an overview of the system.'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+    })
+
+    test('missing abstract section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 0 } },
+          content: { abstract: [] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'MISSING_ABSTRACT_SECTION',
+        ValidationError
+      )
+    })
+
+    test('empty abstract section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: [] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'EMPTY_ABSTRACT_SECTION',
+        ValidationError
+      )
+    })
+
+    test('abstract section contains RFC reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document references [RFC1234].'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_REF',
+        ValidationError
+      )
+    })
+
+    test('abstract section contains URL', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['More information can be found at https://example.com.'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_URL',
+        ValidationError
+      )
+    })
+
+    test('abstract section contains section reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['See Section 5 for more details.'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_REF',
+        ValidationError
+      )
+    })
+
+    test('valid abstract section in FORGIVE_CHECKLIST mode with RFC reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document references [RFC1234].'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_REF',
+        ValidationWarning
+      )
+    })
+
+    test('abstract section with multiple issues', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: {
+            abstract: [
+              'See Section 5 for details. More info at https://example.com. [RFC1234] is also referenced.'
+            ]
+          }
+        }
+      }
+
+      const expectedErrors = [
+        {
+          name: 'INVALID_ABSTRACT_SECTION_REF',
+          refUrl: 'https://authors.ietf.org/required-content#abstract'
+        },
+        {
+          name: 'INVALID_ABSTRACT_SECTION_URL',
+          refUrl: 'https://authors.ietf.org/required-content#abstract'
+        },
+        {
+          name: 'INVALID_ABSTRACT_SECTION_REF',
+          refUrl: 'https://authors.ietf.org/required-content#abstract'
+        }
+      ]
+
+      const actualResult = await validateAbstractSection(doc, { mode: MODES.NORMAL })
+      await expect(actualResult).toEqual(
+        expect.arrayContaining(expectedErrors.map(error => expect.objectContaining(error)))
+      )
+    })
+  })
+
   describe('XML Document Type', () => {
     test('valid abstract section', async () => {
       const doc = cloneDeep(baseXMLDoc)
@@ -69,6 +188,121 @@ describe('document should have a valid abstract section', () => {
 })
 
 describe('document should have a valid introduction section', () => {
+  describe('document should have a valid introduction section (TXT Document Type)', () => {
+    test('valid introduction section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, introduction: { start: 43 } },
+          content: { introduction: ['This is the introduction section.'] }
+        },
+        body: `
+        1. Introduction
+        This is the introduction section.
+        `
+      }
+      await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+    })
+
+    test('missing introduction section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, introduction: { start: 0 } }
+        },
+        body: `
+        1. NotAnIntroduction
+        This is not an introduction section.
+        `
+      }
+      await expect(validateIntroductionSection(doc)).resolves.toContainError(
+        'MISSING_INTRODUCTION_SECTION',
+        ValidationError
+      )
+    })
+
+    test('introduction section in TOC is ignored', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, introduction: { start: 34 } },
+          content: { introduction: ['This is the actual introduction section.'] }
+        },
+        body: `
+        Table of Contents
+        1. Introduction...........................1
+        2. Overview...............................2
+        
+        1. Introduction
+        This is the actual introduction section.`
+      }
+      await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+    })
+
+    test('empty introduction section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, introduction: { start: 12 } },
+          content: { introduction: [] }
+        },
+        body: `
+        1. Introduction
+        `
+      }
+      await expect(validateIntroductionSection(doc)).resolves.toContainError(
+        'EMPTY_INTRODUCTION_SECTION',
+        ValidationError
+      )
+    })
+
+    test('missing document header or title', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: false }, title: false }
+        },
+        body: `
+        1. Introduction
+        This is the introduction section.
+        `
+      }
+      await expect(validateIntroductionSection(doc)).resolves.toContainError(
+        'INVALID_DOCUMENT_STRUCTURE',
+        ValidationError
+      )
+    })
+
+    test('introduction section with alternative names', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, introduction: { start: 12 } },
+          content: { introduction: ['This is the introduction section under an alternative name.'] }
+        },
+        body: `
+        1. Overview
+        This is the introduction section under an alternative name.
+        `
+      }
+      await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
+    })
+
+    test('missing introduction section but forgiving', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, introduction: { start: 0 } }
+        },
+        body: `
+        1. NotAnIntroduction
+        This is not an introduction section.
+        `
+      }
+      await expect(validateIntroductionSection(doc, { mode: 'FORGIVE_CHECKLIST' })).resolves.toHaveLength(0)
+    })
+  })
+
   describe('XML Document Type', () => {
     test('valid introduction section', async () => {
       const doc = cloneDeep(baseXMLDoc)
@@ -100,6 +334,76 @@ describe('document should have a valid introduction section', () => {
 })
 
 describe('document should have a valid security considerations section', () => {
+  describe('document should have a valid security considerations section (TXT Document Type)', () => {
+    test('valid security considerations section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, securityConsiderations: { start: 56 } },
+          content: { securityConsiderations: ['This is the security considerations section.'] }
+        },
+        body: `
+        4. Security Considerations
+        This is the security considerations section.
+        `
+      }
+      await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+    })
+
+    test('missing security considerations section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, securityConsiderations: { start: 0 } }
+        },
+        body: `
+        4. NotSecurityConsiderations
+        This is not the security considerations section.
+        `
+      }
+      await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
+        'MISSING_SECURITY_CONSIDERATIONS_SECTION',
+        ValidationError
+      )
+    })
+
+    test('security considerations section in TOC is ignored', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, securityConsiderations: { start: 78 } },
+          content: { securityConsiderations: ['This is the actual security considerations section.'] }
+        },
+        body: `
+        Table of Contents
+        4. Security Considerations...........................4
+        5. IANA Considerations...............................5
+        
+        4. Security Considerations
+        This is the actual security considerations section.
+        `
+      }
+      await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
+    })
+
+    test('empty security considerations section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, securityConsiderations: { start: 34 } },
+          content: { securityConsiderations: [] }
+        },
+        body: `
+        4. Security Considerations
+        `
+      }
+      await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
+        'EMPTY_SECURITY_CONSIDERATIONS_SECTION',
+        ValidationError
+      )
+    })
+  })
+
   describe('XML Document Type', () => {
     test('valid security considerations section', async () => {
       const doc = cloneDeep(baseXMLDoc)
@@ -131,6 +435,77 @@ describe('document should have a valid security considerations section', () => {
 })
 
 describe('document should have valid security author sections', () => {
+  describe('document should have a valid author section (TXT Document Type)', () => {
+    test('valid author section with correct header', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, authorAddress: { start: 100 } },
+          content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
+        },
+        body: `
+        Authors' Addresses
+        John Doe, ACME Inc.
+        Email: john.doe@example.com
+        `
+      }
+      await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+    })
+
+    test('missing author section in NORMAL mode', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
+        },
+        body: `
+        Introduction
+        This document has no author section.
+        `
+      }
+      await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'MISSING_AUTHOR_SECTION',
+        ValidationError
+      )
+    })
+
+    test('missing author section in FORGIVE_CHECKLIST mode', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
+        },
+        body: `
+        Introduction
+        This document has no author section.
+        `
+      }
+      await expect(validateAuthorSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+        'MISSING_AUTHOR_SECTION',
+        ValidationWarning
+      )
+    })
+
+    test('author section in TOC is ignored', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { header: { start: true }, title: true, authorAddress: { start: 112 } },
+          content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
+        },
+        body: `
+        Table of Contents
+        Authors' Addresses...........................7
+  
+        Authors' Addresses
+        John Doe, ACME Inc.
+        Email: john.doe@example.com
+        `
+      }
+      await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+    })
+  })
+
   describe('XML Document Type', () => {
     function generateAuthorSection () {
       return {
@@ -232,6 +607,149 @@ describe('document should have valid security author sections', () => {
 })
 
 describe('document should have valid references sections', () => {
+  describe('document should have a valid references section (TXT Document Type)', () => {
+    test('valid references section with classified subsections', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { references: { start: 100 } },
+          content: {
+            references: [
+              '7.1. Normative References',
+              '[RFC4360] Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended Communities Attribute", RFC 4360, February 2006.',
+              '7.2. Informative References',
+              '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
+            ]
+          }
+        },
+        body: `
+        7. References
+  
+        7.1. Normative References
+        [RFC4360] Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended Communities Attribute", RFC 4360, February 2006.
+  
+        7.2. Informative References
+        [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
+        `
+      }
+      await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+    })
+
+    test('missing references section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { references: { start: 0 } },
+          content: {}
+        },
+        body: `
+        6. Security Considerations
+        This document does not contain a references section.
+        `
+      }
+      await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'MISSING_REFERENCES_SECTION',
+        ValidationError
+      )
+    })
+
+    test('empty references section', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { references: { start: 120 } },
+          content: { references: [] }
+        },
+        body: `
+        7. References
+  
+        `
+      }
+      await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'EMPTY_REFERENCES_SECTION',
+        ValidationError
+      )
+    })
+
+    test('references section with unclassified subsections', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { references: { start: 100 } },
+          content: {
+            references: [
+              '7.1. Related References',
+              '[RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.',
+              '7.2. Further Reading',
+              '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
+            ]
+          }
+        },
+        body: `
+        7. References
+  
+        7.1. Related References
+        [RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.
+  
+        7.2. Further Reading
+        [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
+        `
+      }
+      await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'UNCLASSIFIED_REFERENCES_SUBSECTION',
+        ValidationError
+      )
+    })
+
+    test('missing references subsections but forgiving mode', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { references: { start: 100 } },
+          content: { references: [] }
+        },
+        body: `
+        7. References
+  
+        `
+      }
+      await expect(validateReferencesSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+        'EMPTY_REFERENCES_SECTION',
+        ValidationWarning
+      )
+    })
+
+    test('references section with unclassified subsections in forgiving mode', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { references: { start: 100 } },
+          content: {
+            references: [
+              '7.1. Related References',
+              '[RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.',
+              '7.2. Further Reading',
+              '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
+            ]
+          }
+        },
+        body: `
+        7. References
+  
+        7.1. Related References
+        [RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.
+  
+        7.2. Further Reading
+        [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
+        `
+      }
+      await expect(validateReferencesSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+        'UNCLASSIFIED_REFERENCES_SUBSECTION',
+        ValidationWarning
+      )
+    })
+  })
+
   describe('XML Document Type', () => {
     test('valid references section (object)', async () => {
       const doc = cloneDeep(baseXMLDoc)
@@ -294,404 +812,5 @@ describe('document should have a valid IANA considerations section', () => {
       set(doc, 'data.rfc.middle.section[0].abc', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.')
       await expect(validateIANAConsiderationsSection(doc)).resolves.toContainError('INVALID_IANA_CONSIDERATIONS_SECTION_CHILD', ValidationError)
     })
-  })
-})
-
-describe('document should have a valid introduction section (TXT Document Type)', () => {
-  test('valid introduction section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, introduction: { start: 43 } },
-        content: { introduction: ['This is the introduction section.'] }
-      },
-      body: `
-      1. Introduction
-      This is the introduction section.
-      `
-    }
-    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
-  })
-
-  test('missing introduction section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, introduction: { start: 0 } }
-      },
-      body: `
-      1. NotAnIntroduction
-      This is not an introduction section.
-      `
-    }
-    await expect(validateIntroductionSection(doc)).resolves.toContainError(
-      'MISSING_INTRODUCTION_SECTION',
-      ValidationError
-    )
-  })
-
-  test('introduction section in TOC is ignored', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, introduction: { start: 34 } },
-        content: { introduction: ['This is the actual introduction section.'] }
-      },
-      body: `
-      Table of Contents
-      1. Introduction...........................1
-      2. Overview...............................2
-      
-      1. Introduction
-      This is the actual introduction section.`
-    }
-    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
-  })
-
-  test('empty introduction section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, introduction: { start: 12 } },
-        content: { introduction: [] }
-      },
-      body: `
-      1. Introduction
-      `
-    }
-    await expect(validateIntroductionSection(doc)).resolves.toContainError(
-      'EMPTY_INTRODUCTION_SECTION',
-      ValidationError
-    )
-  })
-
-  test('missing document header or title', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: false }, title: false }
-      },
-      body: `
-      1. Introduction
-      This is the introduction section.
-      `
-    }
-    await expect(validateIntroductionSection(doc)).resolves.toContainError(
-      'INVALID_DOCUMENT_STRUCTURE',
-      ValidationError
-    )
-  })
-
-  test('introduction section with alternative names', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, introduction: { start: 12 } },
-        content: { introduction: ['This is the introduction section under an alternative name.'] }
-      },
-      body: `
-      1. Overview
-      This is the introduction section under an alternative name.
-      `
-    }
-    await expect(validateIntroductionSection(doc)).resolves.toHaveLength(0)
-  })
-
-  test('missing introduction section but forgiving', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, introduction: { start: 0 } }
-      },
-      body: `
-      1. NotAnIntroduction
-      This is not an introduction section.
-      `
-    }
-    await expect(validateIntroductionSection(doc, { mode: 'FORGIVE_CHECKLIST' })).resolves.toHaveLength(0)
-  })
-})
-
-describe('document should have a valid security considerations section (TXT Document Type)', () => {
-  test('valid security considerations section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, securityConsiderations: { start: 56 } },
-        content: { securityConsiderations: ['This is the security considerations section.'] }
-      },
-      body: `
-      4. Security Considerations
-      This is the security considerations section.
-      `
-    }
-    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
-  })
-
-  test('missing security considerations section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, securityConsiderations: { start: 0 } }
-      },
-      body: `
-      4. NotSecurityConsiderations
-      This is not the security considerations section.
-      `
-    }
-    await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
-      'MISSING_SECURITY_CONSIDERATIONS_SECTION',
-      ValidationError
-    )
-  })
-
-  test('security considerations section in TOC is ignored', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, securityConsiderations: { start: 78 } },
-        content: { securityConsiderations: ['This is the actual security considerations section.'] }
-      },
-      body: `
-      Table of Contents
-      4. Security Considerations...........................4
-      5. IANA Considerations...............................5
-      
-      4. Security Considerations
-      This is the actual security considerations section.
-      `
-    }
-    await expect(validateSecurityConsiderationsSection(doc)).resolves.toHaveLength(0)
-  })
-
-  test('empty security considerations section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, securityConsiderations: { start: 34 } },
-        content: { securityConsiderations: [] }
-      },
-      body: `
-      4. Security Considerations
-      `
-    }
-    await expect(validateSecurityConsiderationsSection(doc)).resolves.toContainError(
-      'EMPTY_SECURITY_CONSIDERATIONS_SECTION',
-      ValidationError
-    )
-  })
-})
-
-describe('document should have a valid author section (TXT Document Type)', () => {
-  test('valid author section with correct header', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, authorAddress: { start: 100 } },
-        content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
-      },
-      body: `
-      Authors' Addresses
-      John Doe, ACME Inc.
-      Email: john.doe@example.com
-      `
-    }
-    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
-  })
-
-  test('missing author section in NORMAL mode', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
-      },
-      body: `
-      Introduction
-      This document has no author section.
-      `
-    }
-    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
-      'MISSING_AUTHOR_SECTION',
-      ValidationError
-    )
-  })
-
-  test('missing author section in FORGIVE_CHECKLIST mode', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, authorAddress: { start: 0 } }
-      },
-      body: `
-      Introduction
-      This document has no author section.
-      `
-    }
-    await expect(validateAuthorSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
-      'MISSING_AUTHOR_SECTION',
-      ValidationWarning
-    )
-  })
-
-  test('author section in TOC is ignored', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { header: { start: true }, title: true, authorAddress: { start: 112 } },
-        content: { authorAddress: ['John Doe, ACME Inc.', 'Email: john.doe@example.com'] }
-      },
-      body: `
-      Table of Contents
-      Authors' Addresses...........................7
-
-      Authors' Addresses
-      John Doe, ACME Inc.
-      Email: john.doe@example.com
-      `
-    }
-    await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
-  })
-})
-
-describe('document should have a valid references section (TXT Document Type)', () => {
-  test('valid references section with classified subsections', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { references: { start: 100 } },
-        content: {
-          references: [
-            '7.1. Normative References',
-            '[RFC4360] Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended Communities Attribute", RFC 4360, February 2006.',
-            '7.2. Informative References',
-            '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
-          ]
-        }
-      },
-      body: `
-      7. References
-
-      7.1. Normative References
-      [RFC4360] Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended Communities Attribute", RFC 4360, February 2006.
-
-      7.2. Informative References
-      [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
-      `
-    }
-    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
-  })
-
-  test('missing references section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { references: { start: 0 } },
-        content: {}
-      },
-      body: `
-      6. Security Considerations
-      This document does not contain a references section.
-      `
-    }
-    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
-      'MISSING_REFERENCES_SECTION',
-      ValidationError
-    )
-  })
-
-  test('empty references section', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { references: { start: 120 } },
-        content: { references: [] }
-      },
-      body: `
-      7. References
-
-      `
-    }
-    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
-      'EMPTY_REFERENCES_SECTION',
-      ValidationError
-    )
-  })
-
-  test('references section with unclassified subsections', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { references: { start: 100 } },
-        content: {
-          references: [
-            '7.1. Related References',
-            '[RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.',
-            '7.2. Further Reading',
-            '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
-          ]
-        }
-      },
-      body: `
-      7. References
-
-      7.1. Related References
-      [RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.
-
-      7.2. Further Reading
-      [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
-      `
-    }
-    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
-      'UNCLASSIFIED_REFERENCES_SUBSECTION',
-      ValidationError
-    )
-  })
-
-  test('missing references subsections but forgiving mode', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { references: { start: 100 } },
-        content: { references: [] }
-      },
-      body: `
-      7. References
-
-      `
-    }
-    await expect(validateReferencesSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
-      'EMPTY_REFERENCES_SECTION',
-      ValidationWarning
-    )
-  })
-
-  test('references section with unclassified subsections in forgiving mode', async () => {
-    const doc = {
-      type: 'txt',
-      data: {
-        markers: { references: { start: 100 } },
-        content: {
-          references: [
-            '7.1. Related References',
-            '[RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.',
-            '7.2. Further Reading',
-            '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
-          ]
-        }
-      },
-      body: `
-      7. References
-
-      7.1. Related References
-      [RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.
-
-      7.2. Further Reading
-      [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
-      `
-    }
-    await expect(validateReferencesSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
-      'UNCLASSIFIED_REFERENCES_SUBSECTION',
-      ValidationWarning
-    )
   })
 })
