@@ -446,7 +446,6 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
   })
 })
 
-
 describe('Parsing author address', () => {
   test('Parsing author address', async () => {
     const txt = `
@@ -476,7 +475,7 @@ describe('Parsing author address', () => {
     expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors‘ Addresses')]))
   })
 })
-      
+
 describe('Parsing obsolete and update metadata', () => {
   test('Parsing obsolete metadata', async () => {
     const txt = `
