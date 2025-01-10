@@ -552,3 +552,146 @@ describe('document should have a valid author section (TXT Document Type)', () =
     await expect(validateAuthorSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
   })
 })
+
+describe('document should have a valid references section (TXT Document Type)', () => {
+  test('valid references section with classified subsections', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { references: { start: 100 } },
+        content: {
+          references: [
+            '7.1. Normative References',
+            '[RFC4360] Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended Communities Attribute", RFC 4360, February 2006.',
+            '7.2. Informative References',
+            '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
+          ]
+        }
+      },
+      body: `
+      7. References
+
+      7.1. Normative References
+      [RFC4360] Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended Communities Attribute", RFC 4360, February 2006.
+
+      7.2. Informative References
+      [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
+      `
+    }
+    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
+  })
+
+  test('missing references section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { references: { start: 0 } },
+        content: {}
+      },
+      body: `
+      6. Security Considerations
+      This document does not contain a references section.
+      `
+    }
+    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'MISSING_REFERENCES_SECTION',
+      ValidationError
+    )
+  })
+
+  test('empty references section', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { references: { start: 120 } },
+        content: { references: [] }
+      },
+      body: `
+      7. References
+
+      `
+    }
+    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'EMPTY_REFERENCES_SECTION',
+      ValidationError
+    )
+  })
+
+  test('references section with unclassified subsections', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { references: { start: 100 } },
+        content: {
+          references: [
+            '7.1. Related References',
+            '[RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.',
+            '7.2. Further Reading',
+            '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
+          ]
+        }
+      },
+      body: `
+      7. References
+
+      7.1. Related References
+      [RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.
+
+      7.2. Further Reading
+      [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
+      `
+    }
+    await expect(validateReferencesSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+      'UNCLASSIFIED_REFERENCES_SUBSECTION',
+      ValidationError
+    )
+  })
+
+  test('missing references subsections but forgiving mode', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { references: { start: 100 } },
+        content: { references: [] }
+      },
+      body: `
+      7. References
+
+      `
+    }
+    await expect(validateReferencesSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+      'EMPTY_REFERENCES_SECTION',
+      ValidationWarning
+    )
+  })
+
+  test('references section with unclassified subsections in forgiving mode', async () => {
+    const doc = {
+      type: 'txt',
+      data: {
+        markers: { references: { start: 100 } },
+        content: {
+          references: [
+            '7.1. Related References',
+            '[RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.',
+            '7.2. Further Reading',
+            '[RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.'
+          ]
+        }
+      },
+      body: `
+      7. References
+
+      7.1. Related References
+      [RFC4360] Sangli, S., "BGP Extended Communities Attribute", RFC 4360, February 2006.
+
+      7.2. Further Reading
+      [RFC7153] Rosen, E., "IANA Registries for BGP Extended Communities", RFC 7153, March 2014.
+      `
+    }
+    await expect(validateReferencesSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+      'UNCLASSIFIED_REFERENCES_SUBSECTION',
+      ValidationWarning
+    )
+  })
+})
