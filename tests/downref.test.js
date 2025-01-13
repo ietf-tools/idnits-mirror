@@ -3,7 +3,7 @@ import { MODES } from '../lib/config/modes.mjs'
 import { toContainError, ValidationWarning, ValidationError, ValidationComment } from '../lib/helpers/error.mjs'
 import { baseXMLDoc, baseTXTDoc } from './fixtures/base-doc.mjs'
 import { cloneDeep, set } from 'lodash-es'
-import { validateDownrefs, validateNormativeReferences } from '../lib/modules/downref.mjs'
+import { validateDownrefs, validateNormativeReferences, validateUnclassifiedReferences } from '../lib/modules/downref.mjs'
 import fetchMock from 'jest-fetch-mock'
 
 expect.extend({
@@ -123,7 +123,7 @@ describe('validateNormativeReferences', () => {
         { value: '8141', subsection: 'normative_references' }
       ])
 
-      fetchMock.mockResponse(JSON.stringify({ status: 'Proposed Standard' }))
+      fetchMock.mockResponse(JSON.stringify({ status: 'Proposed Standard', obsoleted_by: [] }))
 
       const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
       expect(result).toHaveLength(0)
@@ -153,7 +153,7 @@ describe('validateNormativeReferences', () => {
         { value: '8141', subsection: 'normative_references' }
       ])
 
-      fetchMock.mockResponse(JSON.stringify({ status: 'Unknown Status' }))
+      fetchMock.mockResponse(JSON.stringify({ status: 'Unknown Status', obsoleted_by: [] }))
 
       const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
       expect(result).toEqual([
@@ -163,6 +163,72 @@ describe('validateNormativeReferences', () => {
           { ref: 'https://www.rfc-editor.org/info/rfc8141' }
         )
       ])
+    })
+
+    test('unclassified reference to an obsolete RFC', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      set(doc, 'data.extractedElements.referenceSectionRfc', [
+        { value: '4086', subsection: 'unclassified_references' }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.NORMAL })
+      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationError)
+    })
+
+    test('FORGIVE_CHECKLIST mode for an obsolete unclassified RFC', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      set(doc, 'data.extractedElements.referenceSectionRfc', [
+        { value: '4086', subsection: 'unclassified_references' }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.FORGIVE_CHECKLIST })
+      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationWarning)
+    })
+
+    test('normative reference to an obsolete RFC', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      set(doc, 'data.extractedElements.referenceSectionRfc', [
+        { value: '4086', subsection: 'normative_references' }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
+      expect(result).toContainEqual(
+        expect.objectContaining({
+          name: 'OBSOLETE_DOCUMENT',
+          message: expect.stringContaining('RFC 4086 is obsolete and has been replaced by: 9000.')
+        })
+      )
+    })
+
+    test('FORGIVE_CHECKLIST mode for an obsolete RFC', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      set(doc, 'data.extractedElements.referenceSectionRfc', [
+        { value: '4086', subsection: 'normative_references' }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateNormativeReferences(doc, { mode: MODES.FORGIVE_CHECKLIST })
+      expect(result).toContainEqual(
+        expect.objectContaining({
+          name: 'OBSOLETE_DOCUMENT',
+          message: expect.stringContaining('RFC 4086 is obsolete and has been replaced by: 9000.')
+        })
+      )
     })
   })
 
@@ -174,7 +240,7 @@ describe('validateNormativeReferences', () => {
         { reference: [{ _attr: { anchor: 'RFC8141' } }] }
       ])
 
-      fetchMock.mockResponse(JSON.stringify({ status: 'Proposed Standard' }))
+      fetchMock.mockResponse(JSON.stringify({ status: 'Proposed Standard', obsoleted_by: [] }))
 
       const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
       expect(result).toHaveLength(0)
@@ -204,7 +270,7 @@ describe('validateNormativeReferences', () => {
         { reference: [{ _attr: { anchor: 'RFC8141' } }] }
       ])
 
-      fetchMock.mockResponse(JSON.stringify({ status: 'Unknown Status' }))
+      fetchMock.mockResponse(JSON.stringify({ status: 'Unknown Status', obsoleted_by: [] }))
 
       const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
       expect(result).toEqual([
@@ -215,5 +281,24 @@ describe('validateNormativeReferences', () => {
         )
       ])
     })
+  })
+
+  test('normative reference to an obsolete RFC in XML', async () => {
+    const doc = cloneDeep(baseXMLDoc)
+    set(doc, 'data.rfc.back.references.references', [
+      { reference: [{ _attr: { anchor: 'RFC4086' } }] }
+    ])
+
+    fetchMock.mockResponse(
+      JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+    )
+
+    const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        name: 'OBSOLETE_DOCUMENT',
+        message: expect.stringContaining('RFC 4086 is obsolete and has been replaced by: 9000.')
+      })
+    )
   })
 })
