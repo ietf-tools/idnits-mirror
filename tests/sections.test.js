@@ -895,8 +895,8 @@ describe('validateReferencesInText', () => {
         type: 'txt',
         data: {
           extractedElements: {
-            referenceSectionRfc: ['2119', '8174', '1234'],
-            referenceSectionDraftReferences: ['draft-ietf-abc-01'],
+            referenceSectionRfc: [{ value: '1234', section: 'normative_references' }, { value: '8174', section: 'normative_references' }, { value: '2119', section: 'normative_references' }],
+            referenceSectionDraftReferences: [{ value: 'draft-ietf-abc-01', section: 'normative_references' }],
             nonReferenceSectionRfc: ['2119'],
             nonReferenceSectionDraftReferences: []
           }
@@ -908,12 +908,12 @@ describe('validateReferencesInText', () => {
       expect(result).toEqual([
         new ValidationWarning(
           'REFERENCE_NOT_USED',
-          'The reference RFC 8174 is listed in the References section but is not mentioned in the document text.',
+          'The reference RFC 1234 is listed in the References section but is not mentioned in the document text.',
           { ref: 'https://authors.ietf.org/en/required-content#references' }
         ),
         new ValidationWarning(
           'REFERENCE_NOT_USED',
-          'The reference RFC 1234 is listed in the References section but is not mentioned in the document text.',
+          'The reference RFC 8174 is listed in the References section but is not mentioned in the document text.',
           { ref: 'https://authors.ietf.org/en/required-content#references' }
         ),
         new ValidationWarning(
@@ -929,8 +929,8 @@ describe('validateReferencesInText', () => {
         type: 'txt',
         data: {
           extractedElements: {
-            referenceSectionRfc: ['2119'],
-            referenceSectionDraftReferences: ['draft-ietf-abc-01'],
+            referenceSectionRfc: [{ value: '2119', section: 'normative_references' }],
+            referenceSectionDraftReferences: [{ value: 'draft-ietf-abc-01', section: 'normative_references' }],
             nonReferenceSectionRfc: ['2119'],
             nonReferenceSectionDraftReferences: ['draft-ietf-abc-01']
           }
