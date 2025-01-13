@@ -146,6 +146,96 @@ describe('document should have a valid abstract section', () => {
         expect.arrayContaining(expectedErrors.map(error => expect.objectContaining(error)))
       )
     })
+
+    test('abstract section contains Internet-Draft reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document references [I-D.ietf-example-01].'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_ID_REF',
+        ValidationError
+      )
+    })
+
+    test('abstract section contains numeric reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document references [1].'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_NUM_REF',
+        ValidationError
+      )
+    })
+
+    test('abstract section contains custom reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document references [REST].'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_CUSTOM_REF',
+        ValidationError
+      )
+    })
+
+    test('abstract section with multiple new reference types', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: {
+            abstract: [
+              'This document references [I-D.ietf-example-01], [1], and [REST].'
+            ]
+          }
+        }
+      }
+
+      const expectedErrors = [
+        {
+          name: 'INVALID_ABSTRACT_SECTION_ID_REF',
+          refUrl: 'https://authors.ietf.org/required-content#abstract'
+        },
+        {
+          name: 'INVALID_ABSTRACT_SECTION_NUM_REF',
+          refUrl: 'https://authors.ietf.org/required-content#abstract'
+        },
+        {
+          name: 'INVALID_ABSTRACT_SECTION_CUSTOM_REF',
+          refUrl: 'https://authors.ietf.org/required-content#abstract'
+        }
+      ]
+
+      const actualResult = await validateAbstractSection(doc, { mode: MODES.NORMAL })
+      await expect(actualResult).toEqual(
+        expect.arrayContaining(expectedErrors.map(error => expect.objectContaining(error)))
+      )
+    })
+
+    test('valid abstract section in FORGIVE_CHECKLIST mode with Internet-Draft reference', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          markers: { abstract: { start: 10 } },
+          content: { abstract: ['This document references [I-D.ietf-example-01].'] }
+        }
+      }
+      await expect(validateAbstractSection(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError(
+        'INVALID_ABSTRACT_SECTION_ID_REF',
+        ValidationWarning
+      )
+    })
   })
 
   describe('XML Document Type', () => {
