@@ -255,6 +255,7 @@ describe('document should have valid date', () => {
     test('valid date', async () => {
       const doc = cloneDeep(baseXMLDoc)
       const today = DateTime.now()
+
       set(doc, 'data.rfc.front.date._attr', {
         year: today.year,
         month: today.monthLong,
@@ -289,6 +290,53 @@ describe('document should have valid date', () => {
         month: today.monthLong,
         day: today.day
       })
+      await expect(validateDate(doc)).resolves.toContainError('DOC_DATE_IN_FUTURE', ValidationWarning)
+      await expect(validateDate(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('DOC_DATE_IN_FUTURE', ValidationWarning)
+      await expect(validateDate(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('DOC_DATE_IN_FUTURE', ValidationWarning)
+    })
+  })
+
+  describe('TXT Document Type', () => {
+    test('valid date', async () => {
+      const today = DateTime.now().setLocale('en-US')
+      const doc = baseTXTDoc
+
+      doc.data.header.date = {
+        year: today.year,
+        month: today.monthLong,
+        day: today.day
+      }
+      await expect(validateDate(doc)).resolves.toHaveLength(0)
+    })
+    test('date missing', async () => {
+      const doc = baseTXTDoc
+      doc.data.header.date = {}
+      await expect(validateDate(doc)).resolves.toContainError('MISSING_DOC_DATE', ValidationWarning)
+      await expect(validateDate(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('MISSING_DOC_DATE', ValidationWarning)
+      await expect(validateDate(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('MISSING_DOC_DATE', ValidationWarning)
+    })
+    test('date in the past', async () => {
+      const doc = baseTXTDoc
+      const today = DateTime.now().setLocale('en-US').minus({ days: 15 })
+
+      doc.data.header.date = {
+        year: today.year,
+        month: today.monthLong,
+        day: today.day
+      }
+      await expect(validateDate(doc)).resolves.toContainError('DOC_DATE_IN_PAST', ValidationWarning)
+      await expect(validateDate(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('DOC_DATE_IN_PAST', ValidationWarning)
+      await expect(validateDate(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('DOC_DATE_IN_PAST', ValidationWarning)
+    })
+    test('date in the future', async () => {
+      const doc = baseTXTDoc
+      const today = DateTime.now().setLocale('en-US').plus({ days: 15 })
+
+      doc.data.header.date = {
+        year: today.year,
+        month: today.monthLong,
+        day: today.day
+      }
       await expect(validateDate(doc)).resolves.toContainError('DOC_DATE_IN_FUTURE', ValidationWarning)
       await expect(validateDate(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('DOC_DATE_IN_FUTURE', ValidationWarning)
       await expect(validateDate(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('DOC_DATE_IN_FUTURE', ValidationWarning)
