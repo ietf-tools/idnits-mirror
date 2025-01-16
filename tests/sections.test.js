@@ -161,20 +161,6 @@ describe('document should have a valid abstract section', () => {
       )
     })
 
-    test('abstract section contains numeric reference', async () => {
-      const doc = {
-        type: 'txt',
-        data: {
-          markers: { abstract: { start: 10 } },
-          content: { abstract: ['This document references [1].'] }
-        }
-      }
-      await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toContainError(
-        'INVALID_ABSTRACT_SECTION_NUM_REF',
-        ValidationError
-      )
-    })
-
     test('abstract section contains custom reference', async () => {
       const doc = {
         type: 'txt',
@@ -196,7 +182,7 @@ describe('document should have a valid abstract section', () => {
           markers: { abstract: { start: 10 } },
           content: {
             abstract: [
-              'This document references [I-D.ietf-example-01], [1], and [REST].'
+              'This document references [I-D.ietf-example-01] and [REST].'
             ]
           }
         }
@@ -205,10 +191,6 @@ describe('document should have a valid abstract section', () => {
       const expectedErrors = [
         {
           name: 'INVALID_ABSTRACT_SECTION_ID_REF',
-          refUrl: 'https://authors.ietf.org/required-content#abstract'
-        },
-        {
-          name: 'INVALID_ABSTRACT_SECTION_NUM_REF',
           refUrl: 'https://authors.ietf.org/required-content#abstract'
         },
         {
