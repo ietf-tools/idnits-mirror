@@ -80,6 +80,39 @@ describe('document should have valid RFC2119 keywords', () => {
       ])
     })
 
+    test('boilerplate present but no non-boilerplate keywords', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 15 }],
+            boilerplate2119Keywords: [{ keyword: 'MUST', line: 15 }]
+          },
+          boilerplate: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationWarning(
+          'MISSING_REQLEVEL_KEYWORDS',
+          'An RFC2119 boilerplate is present but no keywords are used in the document.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+
     test('forgive-checklist mode skips errors', async () => {
       const doc = {
         type: 'txt',
