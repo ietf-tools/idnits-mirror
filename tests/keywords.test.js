@@ -113,6 +113,44 @@ describe('document should have valid RFC2119 keywords', () => {
       ])
     })
 
+    test('invalid keyword combinations found', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 8 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: true,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: [
+              { invalidKeyword: 'MUST not', line: 20, pos: 5 }
+            ]
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationComment(
+          'INCORRECT_KEYWORD_SPELLING',
+          'The keyword "MUST not" is misspelled.',
+          {
+            ref: 'https://datatracker.ietf.org/doc/html/rfc2119',
+            lines: [{ line: 20, pos: 5 }]
+          }
+        )
+      ])
+    })
+
     test('forgive-checklist mode skips errors', async () => {
       const doc = {
         type: 'txt',
