@@ -13,6 +13,74 @@ expect.extend({
 })
 
 describe('document should have valid RFC2119 keywords', () => {
+  describe('validate2119Keywords (TXT Document Type)', () => {
+    test('keywords found but no boilerplate and no references', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 5 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
+
+      expect(result).toEqual([
+        new ValidationError(
+          'MISSING_REQLEVEL_BOILERPLATE',
+          'One or more RFC2119 keywords are present but an RFC2119 boilerplate and a reference are missing.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+
+    test('forgive-checklist mode skips errors', async () => {
+      const doc = {
+        type: 'txt',
+        data: {
+          extractedElements: {
+            keywords2119: [{ keyword: 'MUST', line: 10 }],
+            boilerplate2119Keywords: []
+          },
+          boilerplate: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          references: {
+            rfc2119: false,
+            rfc8174: false
+          },
+          possibleIssues: {
+            misspeled2119Keywords: []
+          }
+        }
+      }
+
+      const result = await validate2119Keywords(doc, { mode: MODES.FORGIVE_CHECKLIST })
+
+      expect(result).toEqual([
+        new ValidationWarning(
+          'MISSING_REQLEVEL_BOILERPLATE',
+          'One or more RFC2119 keywords are present but an RFC2119 boilerplate and a reference are missing.',
+          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+        )
+      ])
+    })
+  })
+
   describe('XML Document Type', () => {
     const boilerplate = `The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
       NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
