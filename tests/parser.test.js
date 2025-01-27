@@ -5,7 +5,8 @@ import {
   introductionTXTBlock,
   metaTXTBlock,
   securityConsiderationsTXTBlock,
-  authorAddressTXTBlock
+  authorAddressTXTBlock,
+  referenceTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -135,5 +136,50 @@ describe('Missing Author Address section', () => {
 
     const result = await parse(txt, 'txt')
     expect(result.data.markers.authorAddress.start).toBeGreaterThan(0)
+  })
+})
+
+describe('References (if any present) are not categorized as Normative or Informative', () => {
+  test('References are not categorized', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      7.1. Unknown references
+      7.2 Uncategorizes references
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.references).toEqual(expect.not.arrayContaining([expect.stringContaining('Normative References'), expect.stringContaining('Informative References')]))
+  })
+
+  test('Reference section is not present', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.references).toBeNull()
+  })
+
+  test('References are categorized', async () => {
+    const txt = `
+    ${metaTXTBlock}
+    ${tableOfContentsTXTBlock}
+    ${abstractTXTBlock}
+    ${introductionTXTBlock}
+    ${securityConsiderationsTXTBlock}
+    ${referenceTXTBlock}
+  `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.references).toEqual(expect.arrayContaining([expect.stringContaining('Normative References'), expect.stringContaining('Informative References')]))
   })
 })

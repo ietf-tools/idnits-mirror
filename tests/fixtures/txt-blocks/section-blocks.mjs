@@ -50,7 +50,7 @@ export const ianaConsiderationsTXTBlock = `
     No specific actions are required by IANA for this document.
 `
 
-export const referencesTXTBlock = `
+export const referencesTXTBlockShort = `
     7. References
     [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119, March 1997.
@@ -91,4 +91,54 @@ Authors' Addresses
    Keyur Patel
    Arrcus
    Email: keyur@arrcus.com
+`
+
+export const referenceTXTBlock = `
+7.  References
+
+7.1.  Normative References
+
+   [RFC4360]  Sangli, S., Tappan, D., and Y. Rekhter, "BGP Extended
+              Communities Attribute", RFC 4360, DOI 10.17487/RFC4360,
+              February 2006, <https://www.rfc-editor.org/info/rfc4360>.
+
+   [RFC5701]  Rekhter, Y., "IPv6 Address Specific BGP ExtendedCommunity
+              Attribute", RFC 5701, DOI 10.17487/RFC5701,November 2009,
+              <https://www.rfc-editor.org/info/rfc5701>.
+
+   [RFC7153]  Rosen, E. and Y. Rekhter, "IANA Registries for BGP
+              Extended Communities", RFC 7153, DOI 10.17487/RFC7153,
+              March 2014, <https://www.rfc-editor.org/info/rfc7153>.
+
+   [RFC7432]  Sajassi, A., Ed., Aggarwal, R., Bitar, N., Isaac, A.,
+              Uttaro, J., Drake, J., and W. Henderickx, "BGP MPLS-Based
+              Ethernet VPN", RFC 7432, DOI 10.17487/RFC7432, February
+              2015, <https://www.rfc-editor.org/info/rfc7432>.
+
+   [RFC2345]
+
+   [Lalalala-Refere-Sponsor]
+
+7.2.  Informative References
+
+   [I-D.ietf-bess-evpn-igmp-mld-proxy]
+              Sajassi, A., Thoria, S., Mishra, M. P., Drake, J., and W.
+              Lin, "Internet Group Management Protocol (IGMP) and
+              Multicast Listener Discovery (MLD) Proxies for Ethernet
+              VPN (EVPN)", Work in Progress, Internet-Draft,draft-ietf
+              bess-evpn-igmp-mld-proxy-21, 22 March 2022,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-bess
+              evpn-igmp-mld-proxy-21>.
+
+   [I-D.ietf-bess-bgp-multicast-controller]
+              Zhang, Z. J., Raszuk, R., Pacella, D., and A. Gulko,
+              "Controller Based BGP Multicast Signaling", Work in
+              Progress, Internet-Draft, draft-ietf-bess-bgp-multicast
+              controller-09, 11 April 2022,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-bess
+              bgp-multicast-controller-09>.
+
+   [I-D.ietf-idr-legacy-rtc]
+              Mohapatra, P., Sreekantiah, A., Patel, K., Burjiz, B.,and
+              A. Lo, "Automatic Route Target Filtering for legacy PEs",
 `
