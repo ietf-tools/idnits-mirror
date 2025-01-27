@@ -7,7 +7,8 @@ import {
   securityConsiderationsTXTBlock,
   authorAddressTXTBlock,
   referenceTXTBlock,
-  abstractWithReferencesTXTBlock
+  abstractWithReferencesTXTBlock,
+  textWithFQRNTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -197,5 +198,34 @@ describe('Abstract contains references', () => {
 
     const result = await parse(txt, 'txt')
     expect(result.data.content.abstract).toEqual(expect.arrayContaining([expect.stringContaining('Abstract'), expect.stringContaining('[1]')]))
+  })
+})
+
+describe('Parsing FQRN', () => {
+  test('Extracting FQRN domains from text', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithFQRNTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.fqdnDomains).toEqual(expect.arrayContaining(['www.ietf.org', 'example.com', 'random.arpa', 'invalid.arpa']))
+  })
+
+  test('No FQRN domains found in text', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.fqdnDomains).toEqual([])
   })
 })
