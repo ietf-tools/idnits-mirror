@@ -8,7 +8,8 @@ import {
   authorAddressTXTBlock,
   referenceTXTBlock,
   abstractWithReferencesTXTBlock,
-  textWithFQRNTXTBlock
+  textWithFQRNTXTBlock,
+  textWithIPsTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -227,5 +228,36 @@ describe('Parsing FQRN', () => {
 
     const result = await parse(txt, 'txt')
     expect(result.data.extractedElements.fqdnDomains).toEqual([])
+  })
+})
+
+describe('Parsing IPs', () => {
+  test('Extracting IPs from text', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithIPsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.ipv4).toEqual(expect.arrayContaining(['8.8.8.8', '123.45.67.89', '256.0.0.1', '192.0.2.300']))
+    expect(result.data.extractedElements.ipv6).toEqual(expect.arrayContaining(['2001:0000:130F:0000:0000:09C0:876A:130B', '1234:5678:90ab::']))
+  })
+
+  test('No IPs found in text', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.ipv4).toEqual([])
+    expect(result.data.extractedElements.ipv6).toEqual([])
   })
 })
