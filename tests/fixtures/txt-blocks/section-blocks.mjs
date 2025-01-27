@@ -4,6 +4,13 @@ export const abstractTXTBlock = `
     Route Target and describes some example use cases.
 `
 
+export const abstractWithReferencesTXTBlock = `
+    Abstract
+    This document specifies a way to derive an Extended Community from a
+    Route Target and describes some example use cases.
+    See reference below [1]
+`
+
 export const tableOfContentsTXTBlock = `
     Table of Contents
     1. Introduction .................................................... 3

@@ -6,7 +6,8 @@ import {
   metaTXTBlock,
   securityConsiderationsTXTBlock,
   authorAddressTXTBlock,
-  referenceTXTBlock
+  referenceTXTBlock,
+  abstractWithReferencesTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -181,5 +182,20 @@ describe('References (if any present) are not categorized as Normative or Inform
 
     const result = await parse(txt, 'txt')
     expect(result.data.content.references).toEqual(expect.arrayContaining([expect.stringContaining('Normative References'), expect.stringContaining('Informative References')]))
+  })
+})
+
+describe('Abstract contains references', () => {
+  test('Abstract contains references', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.abstract).toEqual(expect.arrayContaining([expect.stringContaining('Abstract'), expect.stringContaining('[1]')]))
   })
 })
