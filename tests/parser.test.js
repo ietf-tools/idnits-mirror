@@ -9,7 +9,10 @@ import {
   referenceTXTBlock,
   abstractWithReferencesTXTBlock,
   textWithFQRNTXTBlock,
-  textWithIPsTXTBlock
+  textWithIPsTXTBlock,
+  textWithRFC2119KeywordsTXTBlock,
+  RFC2119BoilerplateTXTBlock,
+  RFC8174BoilerplateTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -259,5 +262,167 @@ describe('Parsing IPs', () => {
     const result = await parse(txt, 'txt')
     expect(result.data.extractedElements.ipv4).toEqual([])
     expect(result.data.extractedElements.ipv6).toEqual([])
+  })
+})
+
+describe('Testing parsing RFC2119 keywords and boilerplates', () => {
+  test('Parsing RFC2119 keywords', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.keywords2119).toEqual(expect.arrayContaining([
+      { keyword: 'MUST', line: 46 },
+      { keyword: 'MUST NOT', line: 46 },
+      { keyword: 'REQUIRED', line: 46 },
+      { keyword: 'SHALL', line: 46 },
+      { keyword: 'SHALL NOT', line: 46 },
+      { keyword: 'SHOULD', line: 46 },
+      { keyword: 'NOT RECOMMENDED', line: 49 }
+    ]))
+    expect(result.data.extractedElements.boilerplate2119Keywords).toEqual([])
+  })
+
+  test('Parsing RFC2119 boilerplate keywords', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${RFC2119BoilerplateTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.boilerplate2119Keywords).toEqual([
+      'MUST',
+      'MUST NOT',
+      'REQUIRED',
+      'SHALL',
+      'SHALL NOT',
+      'SHOULD',
+      'SHOULD NOT',
+      'RECOMMENDED',
+      'MAY',
+      'OPTIONAL'
+    ])
+  })
+
+  test('Detecting RFC2119 boilerplate', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${RFC2119BoilerplateTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.boilerplate.rfc2119).toBe(true)
+  })
+
+  test('Detecting missing RFC2119 boilerplate', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.boilerplate.rfc2119).toBe(false)
+  })
+
+  test('Detecting RFC2119 reference', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+      [RFC2119]
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.references.rfc2119).toBe(true)
+  })
+
+  test('Detecting missing RFC2119 reference', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.references.rfc2119).toBe(false)
+  })
+
+  test('Detecting RFC8174 boilerplate', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${RFC8174BoilerplateTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.boilerplate.rfc8174).toBe(true)
+  })
+
+  test('Detecting missing RFC8174 boilerplate', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.boilerplate.rfc8174).toBe(false)
+  })
+
+  test('Detecting RFC8174 reference', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+      [RFC8174]
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.references.rfc8174).toBe(true)
+  })
+
+  test('Detecting missing RFC8174 reference', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.references.rfc8174).toBe(false)
   })
 })

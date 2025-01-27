@@ -162,3 +162,24 @@ export const textWithIPsTXTBlock = `
     And a little bit of IPV6 like 2001:0000:130F:0000:0000:09C0:876A:130B.
     And some invalid IPV6 like 1234:5678:90ab::.
 `
+
+export const textWithRFC2119KeywordsTXTBlock = `
+    The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD
+    and other we can find in RFC 2119. Sometimes we can meet
+    lowercase versions like must, should, etc. Or even mixed.
+    And the best one is NOT RECOMMENDED. He is very unique.
+`
+
+export const RFC2119BoilerplateTXTBlock = `
+    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+    NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
+    "OPTIONAL" in this document are to be interpreted as described in
+    RFC 2119.
+`
+
+export const RFC8174BoilerplateTXTBlock = `
+    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", 
+    "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this 
+    document are to be interpreted as described in BCP 14 [RFC2119] [RFC8174] 
+    when, and only when, they appear in all capitals, as shown here.
+`
