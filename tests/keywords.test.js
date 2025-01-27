@@ -441,13 +441,20 @@ describe('document should have valid RFC2119 keywords', () => {
 
       const result = await validate2119Keywords(doc, { mode: MODES.NORMAL })
 
-      expect(result).toEqual([
-        new ValidationError(
-          'MISSING_REQLEVEL_BOILERPLATE',
-          'One or more RFC2119 keywords are present but an RFC2119 boilerplate and a reference are missing.',
-          { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
-        )
-      ])
+      expect(result).toEqual(
+        expect.arrayContaining([
+          new ValidationError(
+            'MISSING_REQLEVEL_BOILERPLATE',
+            'An RFC2119 boilerplate is missing but a similar boilerplate was found.',
+            { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+          ),
+          new ValidationError(
+            'MISSING_REQLEVEL_BOILERPLATE',
+            'One or more RFC2119 keywords are present but an RFC2119 boilerplate and a reference are missing.',
+            { ref: 'https://www.rfc-editor.org/rfc/rfc7322.html#section-4.8.2' }
+          )
+        ])
+      )
     })
 
     test('NOT RECOMMENDED used but not in boilerplate', async () => {
