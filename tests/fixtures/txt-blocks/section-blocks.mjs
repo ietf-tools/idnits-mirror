@@ -149,3 +149,9 @@ export const referenceTXTBlock = `
               Mohapatra, P., Sreekantiah, A., Patel, K., Burjiz, B.,and
               A. Lo, "Automatic Route Target Filtering for legacy PEs",
 `
+
+export const textWithFQRNTXTBlock = `
+    One domain invalid.arpa. We can think about another domain
+    random.arpa. Also there are another kinds of domains like
+    example.com and www.ietf.org.
+`
