@@ -155,3 +155,10 @@ export const textWithFQRNTXTBlock = `
     random.arpa. Also there are another kinds of domains like
     example.com and www.ietf.org.
 `
+
+export const textWithIPsTXTBlock = `
+    Some text with IPsV4 like 8.8.8.8, 123.45.67.89.
+    Also there can be invalid IPs like 256.0.0.1, 192.0.2.300.
+    And a little bit of IPV6 like 2001:0000:130F:0000:0000:09C0:876A:130B.
+    And some invalid IPV6 like 1234:5678:90ab::.
+`
