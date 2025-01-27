@@ -74,3 +74,21 @@ Updates: 6789, 7890, 8901, 9012 (if approved)
             Extended Communities Derived from Route Targets
                  draft-ietf-idr-rt-derived-community-05
 `
+
+export const authorAddressTXTBlock = `
+Authors' Addresses
+
+   Zhaohui Zhang
+   Juniper Networks
+   Email: zzhang@juniper.net
+
+
+   Jeff Haas
+   Juniper Networks
+   Email: jhaas@juniper.net
+
+
+   Keyur Patel
+   Arrcus
+   Email: keyur@arrcus.com
+`
