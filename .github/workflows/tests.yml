@@ -1,0 +1,21 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ "v3" ]
+  pull_request:
+    branches: [ "v3" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: 'npm'
+    - run: npm ci
+    - run: npm test
