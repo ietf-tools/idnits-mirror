@@ -426,3 +426,21 @@ describe('Testing parsing RFC2119 keywords and boilerplates', () => {
     expect(result.data.references.rfc8174).toBe(false)
   })
 })
+
+describe('Parsing similar to RFC2119 boilerplate text', () => {
+  test('Similar to boilerplate text is detected, but it is not a boilerplate', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.boilerplate.rfc2119).toEqual(false)
+    expect(result.data.boilerplate.rfc8174).toEqual(false)
+    expect(result.data.boilerplate.similar2119boilerplate).toEqual(true)
+  })
+})
