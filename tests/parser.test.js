@@ -444,3 +444,33 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
     expect(result.data.boilerplate.similar2119boilerplate).toEqual(true)
   })
 })
+
+describe('Parsing author address', () => {
+  test('Parsing author address', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${authorAddressTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors\' Addresses')]))
+  })
+
+  test('Parsing author address with invalid character', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      Authors‘ Addresses
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors‘ Addresses')]))
+  })
+})
