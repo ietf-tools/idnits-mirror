@@ -607,6 +607,12 @@ describe('document should have valid term spelling', () => {
       await expect(validateTermsStyle(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('INCORRECT_TERM_SPELLING', ValidationComment)
       await expect(validateTermsStyle(doc, { mode: MODES.SUBMISSION })).resolves.toHaveLength(0)
     })
+
+    test('Valid spelling, but it might look suspicious to validator function', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      doc.body = 'Reason lines), but all of them MUST have different protocol values'
+      await expect(validateTermsStyle(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toHaveLength(0)
+    })
   })
   describe('XML Document Type', () => {
     test('valid terms', async () => {
