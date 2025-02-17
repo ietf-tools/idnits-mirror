@@ -446,7 +446,7 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
   })
 })
 
-describe('Parcsing obsolete and update metadata', () => {
+describe('Parsing obsolete and update metadata', () => {
   test('Parsing obsolete metadata', async () => {
     const txt = `
       ${metaTXTBlock}
