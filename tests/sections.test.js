@@ -23,7 +23,7 @@ describe('document should have a valid abstract section', () => {
         type: 'txt',
         data: {
           markers: { abstract: { start: 10 } },
-          content: { abstract: ['Abstrat', 'This document provides an overview of the system.'] }
+          content: { abstract: ['Abstract', 'This document provides an overview of the system.'] }
         }
       }
       await expect(validateAbstractSection(doc, { mode: MODES.NORMAL })).resolves.toHaveLength(0)
