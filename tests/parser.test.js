@@ -444,3 +444,245 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
     expect(result.data.boilerplate.similar2119boilerplate).toEqual(true)
   })
 })
+
+describe('Reference is declared, but not used in the document', () => {
+  test('Parsing declared but not used references', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${referenceTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.referenceSectionRfc).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ subsection: 'normative_references', value: '4360' }),
+        expect.objectContaining({ subsection: 'normative_references', value: '5701' }),
+        expect.objectContaining({ subsection: 'normative_references', value: '7153' }),
+        expect.objectContaining({ subsection: 'normative_references', value: '7432' }),
+        expect.objectContaining({ subsection: 'normative_references', value: '2345' })
+      ])
+    )
+
+    expect(result.data.extractedElements.referenceSectionDraftReferences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '[Lalalala-Refere-Sponsor]', subsection: 'normative_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-bess-evpn-igmp-mld-proxy]', subsection: 'informative_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-bess-bgp-multicast-controller]', subsection: 'informative_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-idr-legacy-rtc]', subsection: 'informative_references' })
+      ])
+    )
+  })
+
+  test('Parsing references in text (only one reference)', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${referenceTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.nonReferenceSectionDraftReferences).toContain('[1]')
+    expect(result.data.extractedElements.nonReferenceSectionRfc).toHaveLength(0)
+  })
+
+  test('Parsing references in text (multiple references)', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      [RFC255], [RFC256], [RFC257], [RFC258]
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      [I-D.ietf-bess-evpn-igmp-mld-proxy], [I-D.ietf-bess-bgp-multicast-controller], [I-D.ietf-idr-legacy-rtc]
+      ${securityConsiderationsTXTBlock}
+      ${referenceTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.nonReferenceSectionDraftReferences).toContain('[1]', '[I-D.ietf-bess-evpn-igmp-mld-proxy]', '[I-D.ietf-bess-bgp-multicast-controller]', '[I-D.ietf-idr-legacy-rtc]')
+    expect(result.data.extractedElements.nonReferenceSectionRfc).toContain('255', '256', '257', '258')
+  })
+
+  test('Parsing text without reference section', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.referenceSectionRfc).toHaveLength(0)
+    expect(result.data.extractedElements.referenceSectionDraftReferences).toHaveLength(0)
+  })
+})
+
+describe('Parsing references with categorization', () => {
+  test('Correctly categorizes normative and informative RFC references', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      7.1. Normative References
+      [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997.
+      [RFC8174] Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174, May 2017.
+      7.2. Informative References
+      [RFC3552] Rescorla, E., "Guidelines for Writing RFC Text on Security Considerations", BCP 72, RFC 3552, DOI 10.17487/RFC3552, July 2003.
+      [RFC7322] Flanagan, H., "RFC Style Guide", RFC 7322, DOI 10.17487/RFC7322, September 2014.
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionRfc).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '2119', subsection: 'normative_references' }),
+        expect.objectContaining({ value: '8174', subsection: 'normative_references' }),
+        expect.objectContaining({ value: '3552', subsection: 'informative_references' }),
+        expect.objectContaining({ value: '7322', subsection: 'informative_references' })
+      ])
+    )
+  })
+
+  test('Correctly categorizes normative and informative draft references', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      7.1. Normative References
+      [I-D.ietf-httpbis-semantics] Fielding, R., "HTTP Semantics", draft-ietf-httpbis-semantics-19, October 2021.
+      [I-D.ietf-quic-http] Bishop, M., "HTTP over QUIC", draft-ietf-quic-http-34, May 2021.
+      7.2. Informative References
+      [I-D.ietf-httpbis-cache] Nottingham, M., "HTTP Caching", draft-ietf-httpbis-cache-09, November 2020.
+      [I-D.ietf-httpbis-client-hints] Grigorik, I., "Client Hints", draft-ietf-httpbis-client-hints-10, January 2021.
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionDraftReferences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '[I-D.ietf-httpbis-semantics]', subsection: 'normative_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-quic-http]', subsection: 'normative_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-httpbis-cache]', subsection: 'informative_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-httpbis-client-hints]', subsection: 'informative_references' })
+      ])
+    )
+  })
+
+  test('Detects references that are not categorized as normative or informative', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      [RFC5234] Crocker, D., "Augmented BNF for Syntax Specifications: ABNF", RFC 5234, January 2008.
+      [RFC8446] Rescorla, E., "The Transport Layer Security (TLS) Protocol Version 1.3", RFC 8446, August 2018.
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionRfc).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '5234', subsection: null }),
+        expect.objectContaining({ value: '8446', subsection: null })
+      ])
+    )
+  })
+
+  test('Parses text without reference section correctly', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionRfc).toHaveLength(0)
+    expect(result.data.extractedElements.referenceSectionDraftReferences).toHaveLength(0)
+  })
+
+  test('Detects unclassified references in reference section', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      7.1. Additional References
+      [RFC5234] Crocker, D., "Augmented BNF for Syntax Specifications: ABNF", RFC 5234, January 2008.
+      [RFC8446] Rescorla, E., "TLS 1.3", RFC 8446, August 2018.
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionRfc).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '5234', subsection: 'unclassified_references' }),
+        expect.objectContaining({ value: '8446', subsection: 'unclassified_references' })
+      ])
+    )
+  })
+
+  test('Detects unclassified draft references', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      7.1. Miscellaneous References
+      [I-D.ietf-httpbis-cache] Nottingham, M., "HTTP Caching", draft-ietf-httpbis-cache-09, November 2020.
+      [I-D.ietf-httpbis-client-hints] Grigorik, I., "Client Hints", draft-ietf-httpbis-client-hints-10, January 2021.
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionDraftReferences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '[I-D.ietf-httpbis-cache]', subsection: 'unclassified_references' }),
+        expect.objectContaining({ value: '[I-D.ietf-httpbis-client-hints]', subsection: 'unclassified_references' })
+      ])
+    )
+  })
+
+  test('Parses reference section without categorization', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      7. References
+      [RFC9110] Fielding, R., "HTTP Semantics", RFC 9110, June 2022.
+      [RFC9205] Kucherawy, M., "The Use of the Require-Recipient-Valid-Since Header Field in Email", RFC 9205, September 2022.
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.extractedElements.referenceSectionRfc).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ value: '9110', subsection: null }),
+        expect.objectContaining({ value: '9205', subsection: null })
+      ])
+    )
+  })
+})
