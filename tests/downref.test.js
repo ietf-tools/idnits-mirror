@@ -84,5 +84,52 @@ describe('validateDownrefs', () => {
       const result = await validateDownrefs(doc, { mode: MODES.FORGIVE_CHECKLIST })
       expect(result).toContainError('DOWNREF_DRAFT', ValidationWarning)
     })
+
+    test('valid XML references without downrefs (multiple references in a section)', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        {
+          reference: [
+            { _attr: { anchor: 'RFC2119' } },
+            { _attr: { anchor: 'RFC8174' } },
+            { _attr: { anchor: 'RFC1234' } }
+          ]
+        }
+      ])
+
+      const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
+      expect(result).toHaveLength(0)
+    })
+
+    test('invalid XML downref when multiple references exist in a section', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        {
+          reference: [
+            { _attr: { anchor: 'RFC2119' } },
+            { _attr: { anchor: 'RFC8174' } },
+            { _attr: { anchor: 'draft-ietf-emu-aka-pfs-34' } } // This is a downref
+          ]
+        }
+      ])
+
+      const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
+      expect(result).toContainError('DOWNREF_DRAFT', ValidationError)
+    })
+
+    test('FORGIVE_CHECKLIST mode returns warnings when multiple references exist', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        {
+          reference: [
+            { _attr: { anchor: 'RFC4187' } },
+            { _attr: { anchor: 'draft-ietf-quic-http-34' } } // This is a downref
+          ]
+        }
+      ])
+
+      const result = await validateDownrefs(doc, { mode: MODES.FORGIVE_CHECKLIST })
+      expect(result).toContainError('DOWNREF_DRAFT', ValidationWarning)
+    })
   })
 })

@@ -444,3 +444,61 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
     expect(result.data.boilerplate.similar2119boilerplate).toEqual(true)
   })
 })
+
+describe('Parsing Category and Intended Status from document header', () => {
+  test('Parses Category correctly', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', 'Category: Standards Track')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.category).toBe('Standards Track')
+  })
+
+  test('Parses Intended Status correctly', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', 'Intended status: Experimental')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.intendedStatus).toBe('Experimental')
+  })
+
+  test('Handles missing status or category', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', '')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.category).toBeUndefined()
+  })
+
+  test('Handles Unknown Intended status', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Standards Track', 'Unknown')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.intendedStatus).toBe('Unknown')
+  })
+})
