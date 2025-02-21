@@ -446,6 +446,37 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
   })
 })
 
+
+describe('Parsing author address', () => {
+  test('Parsing author address', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${authorAddressTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors\' Addresses')]))
+  })
+
+  test('Parsing author address with invalid character', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      Authors‘ Addresses
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors‘ Addresses')]))
+  })
+})
+      
 describe('Parsing obsolete and update metadata', () => {
   test('Parsing obsolete metadata', async () => {
     const txt = `
