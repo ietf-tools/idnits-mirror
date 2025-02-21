@@ -12,7 +12,8 @@ import {
   textWithIPsTXTBlock,
   textWithRFC2119KeywordsTXTBlock,
   RFC2119BoilerplateTXTBlock,
-  RFC8174BoilerplateTXTBlock
+  RFC8174BoilerplateTXTBlock,
+  metaWithoutObsoleteAndUpdatesTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -442,5 +443,35 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
     expect(result.data.boilerplate.rfc2119).toEqual(false)
     expect(result.data.boilerplate.rfc8174).toEqual(false)
     expect(result.data.boilerplate.similar2119boilerplate).toEqual(true)
+  })
+})
+
+describe('Parsing obsolete and update metadata', () => {
+  test('Parsing obsolete metadata', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.obsoletesRfc).toEqual(['5678', '1234', '2345', '3456'])
+    expect(result.data.extractedElements.updatesRfc).toEqual(['6789', '7890', '8901', '9012'])
+  })
+
+  test('Parsing tetxt without obsolete and update metadata', async () => {
+    const txt = `
+      ${metaWithoutObsoleteAndUpdatesTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.obsoletesRfc).toHaveLength(0)
+    expect(result.data.extractedElements.updatesRfc).toHaveLength(0)
   })
 })
