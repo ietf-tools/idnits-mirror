@@ -446,7 +446,6 @@ describe('Parsing similar to RFC2119 boilerplate text', () => {
   })
 })
 
-
 describe('Parsing author address', () => {
   test('Parsing author address', async () => {
     const txt = `
@@ -476,7 +475,7 @@ describe('Parsing author address', () => {
     expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors‘ Addresses')]))
   })
 })
-      
+
 describe('Parsing obsolete and update metadata', () => {
   test('Parsing obsolete metadata', async () => {
     const txt = `
@@ -504,5 +503,46 @@ describe('Parsing obsolete and update metadata', () => {
     const result = await parse(txt, 'txt')
     expect(result.data.extractedElements.obsoletesRfc).toHaveLength(0)
     expect(result.data.extractedElements.updatesRfc).toHaveLength(0)
+  })
+})
+
+describe('Parsing document intended status', () => {
+  test('Correctly extracts intended document status', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test.txt')
+    expect(result.data.header.intendedStatus).toBe('Standards Track')
+  })
+
+  test('Handles INVALID document status', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', 'Category: InvalidStatus')}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test.txt')
+    expect(result.data.header.category).toBe('InvalidStatus')
+  })
+
+  test('Handles incorrect document status', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', 'Category: Standards Track')}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test.txt')
+    expect(result.data.header.category).toBe('Standards Track')
   })
 })
