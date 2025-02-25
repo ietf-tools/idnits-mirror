@@ -7,7 +7,7 @@ import {
   validateObsoleteUpdateRef,
   validateVersion
 } from '../lib/modules/metadata.mjs'
-import { baseXMLDoc } from './fixtures/base-doc.mjs'
+import { baseXMLDoc, baseTXTDoc } from './fixtures/base-doc.mjs'
 import { cloneDeep, set } from 'lodash-es'
 import { DateTime } from 'luxon'
 import fetchMock from 'jest-fetch-mock'
@@ -328,6 +328,39 @@ describe('document should have valid category', () => {
         category: 'xyz123',
         docName: 'draft-beep-boop'
       })
+      await expect(validateCategory(doc)).resolves.toContainError('INVALID_DOC_CATEGORY', ValidationWarning)
+      await expect(validateCategory(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('INVALID_DOC_CATEGORY', ValidationWarning)
+      await expect(validateCategory(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('INVALID_DOC_CATEGORY', ValidationWarning)
+    })
+  })
+
+  describe('TXT Document Type', () => {
+    test('valid category', async () => {
+      const doc = baseTXTDoc
+      doc.data.header.intendedStatus = 'Standards Track'
+      doc.data.slug = 'draft-ietf-beep-boop'
+
+      await expect(validateCategory(doc)).resolves.toHaveLength(0)
+    })
+    test('missing category for a draft', async () => {
+      const doc = baseTXTDoc
+      doc.data.slug = 'draft-ietf-beep-boop'
+
+      await expect(validateCategory(doc)).resolves.toHaveLength(0)
+    })
+    test('missing category for a rfc doc', async () => {
+      const doc = baseTXTDoc
+      doc.data.slug = 'beep-boop'
+      doc.data.header.intendedStatus = null
+
+      await expect(validateCategory(doc)).resolves.toContainError('MISSING_DOC_CATEGORY', ValidationWarning)
+      await expect(validateCategory(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('MISSING_DOC_CATEGORY', ValidationWarning)
+      await expect(validateCategory(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('MISSING_DOC_CATEGORY', ValidationWarning)
+    })
+    test('invalid category', async () => {
+      const doc = baseTXTDoc
+      doc.data.header.intendedStatus = 'xyz123'
+      doc.data.slug = 'draft-beep-boop'
       await expect(validateCategory(doc)).resolves.toContainError('INVALID_DOC_CATEGORY', ValidationWarning)
       await expect(validateCategory(doc, { mode: MODES.FORGIVE_CHECKLIST })).resolves.toContainError('INVALID_DOC_CATEGORY', ValidationWarning)
       await expect(validateCategory(doc, { mode: MODES.SUBMISSION })).resolves.toContainError('INVALID_DOC_CATEGORY', ValidationWarning)
