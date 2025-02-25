@@ -12,7 +12,8 @@ import {
   textWithIPsTXTBlock,
   textWithRFC2119KeywordsTXTBlock,
   RFC2119BoilerplateTXTBlock,
-  RFC8174BoilerplateTXTBlock
+  RFC8174BoilerplateTXTBlock,
+  metaWithoutObsoleteAndUpdatesTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
