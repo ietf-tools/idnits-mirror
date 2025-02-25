@@ -2,6 +2,9 @@ export const baseTXTDoc = {
   type: 'txt',
   filename: '',
   body: '',
+  header: {
+    category: null
+  },
   data: {
     pageCount: 1,
     header: {
@@ -45,6 +48,6 @@ export const baseXMLDoc = {
   filename: '',
   externalEntities: [],
   data: {
-    rfc: { }
+    rfc: { _attr: { category: 'std' } }
   }
 }
