@@ -183,7 +183,7 @@ describe('validateNormativeReferences', () => {
     test('normative reference with undefined status', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'RFC4086' } }] }
+        { name: 'Normative references', reference: [{ _attr: { anchor: 'RFC4086' } }] }
       ])
 
       fetchMock.mockResponse(JSON.stringify({}))
@@ -201,7 +201,7 @@ describe('validateNormativeReferences', () => {
     test('normative reference with unknown status', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'RFC8141' } }] }
+        { name: 'Normative references', reference: [{ _attr: { anchor: 'RFC8141' } }] }
       ])
 
       fetchMock.mockResponse(JSON.stringify({ status: 'Unknown Status' }))
