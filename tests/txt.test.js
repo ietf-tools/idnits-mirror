@@ -105,7 +105,7 @@ describe('validateCodeBlockLicenses', () => {
     expect(result).toHaveLength(0)
   })
 
-  test('should return no warnings if all code blocks have license declarations', async () => {
+  test('should return no warnings if document has code blocks and license declaration', async () => {
     const doc = {
       data: {
         contains: {
