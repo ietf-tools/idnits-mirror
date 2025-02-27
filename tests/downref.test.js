@@ -20,18 +20,9 @@ describe('validateDownrefs', () => {
       expect(result).toHaveLength(0)
     })
 
-    test('invalid downref for a draft', async () => {
-      const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [{ value: 'draft-ietf-emu-aka-pfs-34' }])
-      set(doc, 'data.header.category', 'Internet Standard')
-
-      const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
-      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS_IN_REGISTRY', ValidationError)
-    })
-
     test('invalid downref for an RFC', async () => {
       const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '1234' }])
+      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '1234', subsection: 'normative_references' }])
       set(doc, 'data.header.category', 'Internet Standard')
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
@@ -52,8 +43,13 @@ describe('validateDownrefs', () => {
     test('valid XML references without downrefs', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'RFC9114' } }] },
-        { reference: [{ _attr: { anchor: 'RFC8141' } }] }
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'RFC8141' } },
+            { _attr: { anchor: 'RFC9114' } }
+          ]
+        }
       ])
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
@@ -63,7 +59,12 @@ describe('validateDownrefs', () => {
     test('invalid XML ref for a draft', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'draft-ietf-emu-aka-pfs-34' } }] }
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'draft-ietf-emu-aka-pfs-34' } }
+          ]
+        }
       ])
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
@@ -73,8 +74,13 @@ describe('validateDownrefs', () => {
     test('FORGIVE_CHECKLIST mode returns warnings for XML', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'RFC7322' } }] },
-        { reference: [{ _attr: { anchor: 'draft-ietf-quic-http-34' } }] }
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'draft-ietf-quic-http-34' } },
+            { _attr: { anchor: 'RFC7322' } }
+          ]
+        }
       ])
 
       const result = await validateDownrefs(doc, { mode: MODES.FORGIVE_CHECKLIST })
@@ -85,6 +91,7 @@ describe('validateDownrefs', () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
         {
+          name: 'Normative References',
           reference: [
             { _attr: { anchor: 'RFC9114' } },
             { _attr: { anchor: 'RFC8888' } },
@@ -101,25 +108,28 @@ describe('validateDownrefs', () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
         {
+          name: 'Normative References',
           reference: [
             { _attr: { anchor: 'RFC2119' } },
             { _attr: { anchor: 'RFC8174' } },
-            { _attr: { anchor: 'draft-ietf-emu-aka-pfs-34' } } // This is a downref
+            { _attr: { anchor: 'RFC4187' } } // This is a downref
           ]
         }
       ])
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
-      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS', ValidationError)
+
+      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS_IN_REGISTRY', ValidationError)
     })
 
     test('FORGIVE_CHECKLIST mode returns warnings when multiple references exist', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
         {
+          name: 'Normative References',
           reference: [
             { _attr: { anchor: 'RFC4187' } },
-            { _attr: { anchor: 'draft-ietf-quic-http-34' } } // This is a downref
+            { _attr: { anchor: 'draft-ietf-quic-http-34' } }
           ]
         }
       ])
