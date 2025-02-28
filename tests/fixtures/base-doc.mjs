@@ -2,6 +2,9 @@ export const baseTXTDoc = {
   type: 'txt',
   filename: '',
   body: '',
+  header: {
+    category: null
+  },
   data: {
     pageCount: 1,
     header: {
@@ -11,8 +14,33 @@ export const baseTXTDoc = {
       expires: null,
       intendedStatus: null
     },
+    content: {
+      abstract: null,
+      introduction: null,
+      securityConsiderations: null,
+      authorAddress: null,
+      references: null,
+      ianaConsiderations: null
+    },
     title: null,
-    slug: null
+    slug: null,
+    extractedElements: {
+      fqdnDomains: [],
+      ipv4: [],
+      ipv6: [],
+      keywords2119: [],
+      boilerplate2119Keywords: [],
+      obsoletesRfc: [],
+      updatesRfc: [],
+      nonReferenceSectionRfc: [],
+      referenceSectionRfc: [],
+      nonReferenceSectionDraftReferences: [],
+      referenceSectionDraftReferences: []
+    },
+    possibleIssues: {
+      inlineCode: [],
+      misspeled2119Keywords: []
+    }
   }
 }
 
@@ -21,6 +49,6 @@ export const baseXMLDoc = {
   filename: '',
   externalEntities: [],
   data: {
-    rfc: { }
+    rfc: { _attr: { category: 'std' } }
   }
 }
