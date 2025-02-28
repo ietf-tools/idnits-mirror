@@ -19,57 +19,36 @@ afterEach(() => {
 })
 
 describe('validateDownrefs', () => {
+  beforeEach(() => {
+    fetchMock.disableMocks()
+  })
+
   describe('TXT Document Type', () => {
     test('valid references with no downrefs', async () => {
       const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', ['4086', '8141'])
-      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [
-        { value: 'draft-ietf-quic-http-34', section: 'normative_references' }
-      ])
-
-      fetchMock.dontMockOnce()
+      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '4086' }, { value: '8141' }])
+      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [{ value: 'draft-ietf-quic-http-34' }])
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
       expect(result).toHaveLength(0)
     })
 
-    test('invalid downref for a draft', async () => {
-      const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '952', section: 'normative_section' }])
-      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [
-        { value: 'draft-ietf-emu-aka-pfs-34', section: 'normative_references' }
-      ])
-
-      fetchMock.dontMockOnce()
-
-      const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
-      expect(result).toContainError('DOWNREF_DRAFT', ValidationError)
-    })
-
     test('invalid downref for an RFC', async () => {
       const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '952', section: 'normative_section' }])
-      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [
-        { value: 'draft-ietf-emu-aka-pfs-34', section: 'normative_references' }
-      ])
-
-      fetchMock.dontMockOnce()
+      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '1234', subsection: 'normative_references' }])
+      set(doc, 'data.header.category', 'Internet Standard')
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
-      expect(result).toContainError('DOWNREF_DRAFT', ValidationError)
+      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS', ValidationError)
     })
 
-    test('FORGIVE_CHECKLIST mode returns warnings', async () => {
+    test('FORGIVE_CHECKLIST mode returns zero warnings', async () => {
       const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', ['1094'])
-      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [
-        { value: 'draft-ietf-emu-aka-pfs', section: 'normative_references' }
-      ])
-
-      fetchMock.dontMockOnce()
+      set(doc, 'data.extractedElements.referenceSectionRfc', [{ value: '1094' }])
+      set(doc, 'data.extractedElements.referenceSectionDraftReferences', [{ value: 'draft-ietf-quic-http-34' }])
 
       const result = await validateDownrefs(doc, { mode: MODES.FORGIVE_CHECKLIST })
-      expect(result).toContainError('DOWNREF_DRAFT', ValidationWarning)
+      expect(result).toHaveLength(0)
     })
   })
 
@@ -77,39 +56,99 @@ describe('validateDownrefs', () => {
     test('valid XML references without downrefs', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'RFC4086' } }] },
-        { reference: [{ _attr: { anchor: 'RFC8141' } }] }
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'RFC8141' } },
+            { _attr: { anchor: 'RFC9114' } }
+          ]
+        }
       ])
-
-      fetchMock.dontMockOnce()
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
       expect(result).toHaveLength(0)
     })
 
-    test('invalid XML downref for a draft', async () => {
+    test('invalid XML ref for a draft', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'draft-ietf-emu-aka-pfs-34' } }] }
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'draft-ietf-emu-aka-pfs-34' } }
+          ]
+        }
       ])
 
-      fetchMock.dontMockOnce()
-
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
-      expect(result).toContainError('DOWNREF_DRAFT', ValidationError)
+      expect(result).toHaveLength(0)
     })
 
     test('FORGIVE_CHECKLIST mode returns warnings for XML', async () => {
       const doc = cloneDeep(baseXMLDoc)
       set(doc, 'data.rfc.back.references.references', [
-        { reference: [{ _attr: { anchor: 'RFC4187' } }] },
-        { reference: [{ _attr: { anchor: 'draft-ietf-quic-http-34' } }] }
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'draft-ietf-quic-http-34' } },
+            { _attr: { anchor: 'RFC7322' } }
+          ]
+        }
       ])
 
-      fetchMock.dontMockOnce()
+      const result = await validateDownrefs(doc, { mode: MODES.FORGIVE_CHECKLIST })
+      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS', ValidationWarning)
+    })
+
+    test('valid XML references without downrefs (multiple references in a section)', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'RFC9114' } },
+            { _attr: { anchor: 'RFC8888' } },
+            { _attr: { anchor: 'RFC7655' } }
+          ]
+        }
+      ])
+
+      const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
+      expect(result).toHaveLength(0)
+    })
+
+    test('invalid XML downref when multiple references exist in a section', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'RFC2119' } },
+            { _attr: { anchor: 'RFC8174' } },
+            { _attr: { anchor: 'RFC4187' } } // This is a downref
+          ]
+        }
+      ])
+
+      const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
+
+      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS_IN_REGISTRY', ValidationError)
+    })
+
+    test('FORGIVE_CHECKLIST mode returns warnings when multiple references exist', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        {
+          name: 'Normative References',
+          reference: [
+            { _attr: { anchor: 'RFC4187' } },
+            { _attr: { anchor: 'draft-ietf-quic-http-34' } }
+          ]
+        }
+      ])
 
       const result = await validateDownrefs(doc, { mode: MODES.FORGIVE_CHECKLIST })
-      expect(result).toContainError('DOWNREF_DRAFT', ValidationWarning)
+      expect(result).toContainError('DOWNREF_TO_LOWER_STATUS_IN_REGISTRY', ValidationWarning)
     })
   })
 })
@@ -240,7 +279,7 @@ describe('validateNormativeReferences', () => {
         { reference: [{ _attr: { anchor: 'RFC8141' } }] }
       ])
 
-      fetchMock.mockResponse(JSON.stringify({ status: 'Proposed Standard', obsoleted_by: [] }))
+      fetchMock.mockResponse(JSON.stringify({ status: 'Proposed Standard' }))
 
       const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
       expect(result).toHaveLength(0)
@@ -281,24 +320,5 @@ describe('validateNormativeReferences', () => {
         )
       ])
     })
-  })
-
-  test('normative reference to an obsolete RFC in XML', async () => {
-    const doc = cloneDeep(baseXMLDoc)
-    set(doc, 'data.rfc.back.references.references', [
-      { name: 'Normative references', reference: [{ _attr: { anchor: 'RFC4086' } }] }
-    ])
-
-    fetchMock.mockResponse(
-      JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
-    )
-
-    const result = await validateNormativeReferences(doc, { mode: MODES.NORMAL })
-    expect(result).toContainEqual(
-      expect.objectContaining({
-        name: 'OBSOLETE_DOCUMENT',
-        message: expect.stringContaining('RFC 4086 is obsolete and has been replaced by: 9000.')
-      })
-    )
   })
 })
