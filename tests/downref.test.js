@@ -204,34 +204,6 @@ describe('validateNormativeReferences', () => {
       ])
     })
 
-    test('unclassified reference to an obsolete RFC', async () => {
-      const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', [
-        { value: '4086', subsection: 'unclassified_references' }
-      ])
-
-      fetchMock.mockResponse(
-        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
-      )
-
-      const result = await validateUnclassifiedReferences(doc, { mode: MODES.NORMAL })
-      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationError)
-    })
-
-    test('FORGIVE_CHECKLIST mode for an obsolete unclassified RFC', async () => {
-      const doc = cloneDeep(baseTXTDoc)
-      set(doc, 'data.extractedElements.referenceSectionRfc', [
-        { value: '4086', subsection: 'unclassified_references' }
-      ])
-
-      fetchMock.mockResponse(
-        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
-      )
-
-      const result = await validateUnclassifiedReferences(doc, { mode: MODES.FORGIVE_CHECKLIST })
-      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationWarning)
-    })
-
     test('normative reference to an obsolete RFC', async () => {
       const doc = cloneDeep(baseTXTDoc)
       set(doc, 'data.extractedElements.referenceSectionRfc', [
@@ -317,6 +289,104 @@ describe('validateNormativeReferences', () => {
           'UNKNOWN_STATUS',
           'RFC 8141 has an unrecognized status: "Unknown Status".',
           { ref: 'https://www.rfc-editor.org/info/rfc8141' }
+        )
+      ])
+    })
+  })
+})
+
+describe('validateUnclassifiedReferences', () => {
+  describe('TXT Document Type', () => {
+    test('unclassified reference to an obsolete RFC', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      set(doc, 'data.extractedElements.referenceSectionRfc', [
+        { value: '4086', subsection: 'unclassified_references' }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.NORMAL })
+      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationError)
+    })
+
+    test('FORGIVE_CHECKLIST mode for an obsolete unclassified RFC', async () => {
+      const doc = cloneDeep(baseTXTDoc)
+      set(doc, 'data.extractedElements.referenceSectionRfc', [
+        { value: '4086', subsection: 'unclassified_references' }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.FORGIVE_CHECKLIST })
+      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationWarning)
+    })
+  })
+
+  describe('XML Document Type', () => {
+    test('unclassified reference to an obsolete RFC', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        { name: 'Other References', reference: [{ _attr: { anchor: 'RFC4086' } }] }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.NORMAL })
+      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationError)
+    })
+
+    test('FORGIVE_CHECKLIST mode for an obsolete unclassified RFC', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        { name: 'Other References', reference: [{ _attr: { anchor: 'RFC4086' } }] }
+      ])
+
+      fetchMock.mockResponse(
+        JSON.stringify({ status: 'Proposed Standard', obsoleted_by: ['9000'] })
+      )
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.FORGIVE_CHECKLIST })
+      expect(result).toContainError('OBSOLETE_UNCLASSIFIED_REFERENCE', ValidationWarning)
+    })
+
+    test('unclassified reference with undefined status', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        { name: 'Other References', reference: [{ _attr: { anchor: 'RFC1234' } }] }
+      ])
+
+      fetchMock.mockResponse(JSON.stringify({}))
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.NORMAL })
+      expect(result).toEqual([
+        new ValidationComment(
+          'UNDEFINED_STATUS',
+          'RFC 1234 does not have a defined status or could not be fetched',
+          { ref: 'https://www.rfc-editor.org/info/rfc1234' }
+        )
+      ])
+    })
+
+    test('unclassified reference with unknown status', async () => {
+      const doc = cloneDeep(baseXMLDoc)
+      set(doc, 'data.rfc.back.references.references', [
+        { name: 'Other References', reference: [{ _attr: { anchor: 'RFC5678' } }] }
+      ])
+
+      fetchMock.mockResponse(JSON.stringify({ obsoleted_by: [] }))
+
+      const result = await validateUnclassifiedReferences(doc, { mode: MODES.NORMAL })
+      expect(result).toEqual([
+        new ValidationComment(
+          'UNDEFINED_STATUS',
+          'RFC 5678 does not have a defined status or could not be fetched',
+          { ref: 'https://www.rfc-editor.org/info/rfc5678' }
         )
       ])
     })
