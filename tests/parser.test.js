@@ -658,3 +658,72 @@ describe('Parsing references with categorization', () => {
     expect(result.data.extractedElements.referenceSectionDraftReferences).toHaveLength(0)
   })
 })
+
+describe('Parsing document date', () => {
+  test('Parses document date correctly', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+
+    expect(result.data.header.date).toEqual(expect.objectContaining({ day: 21, month: 'January', year: 2025 }))
+  })
+
+  test('Parses date with missing day (day becomes NaN)', async () => {
+    const metaBlock = `
+Source   A. Author
+January 2025
+Title of Document
+`
+    const txt = `
+      ${metaBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+    const result = await parse(txt, 'test-doc.txt')
+    expect(result.data.header.date.month).toEqual('January')
+    expect(result.data.header.date.year).toEqual(2025)
+    expect(isNaN(result.data.header.date.day)).toBe(true)
+  })
+
+  test('Parses valid date from header left part correctly', async () => {
+    const metaBlock = `
+Source   A. Author
+21 January 2025
+Title of Document
+`
+    const txt = `
+      ${metaBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+    const result = await parse(txt, 'test-doc.txt')
+    expect(result.data.header.date).toEqual({ day: 21, month: 'January', year: 2025 })
+  })
+
+  test('Returns null if date string is invalid', async () => {
+    const metaBlock = `
+Source   A. Author
+Invalid Date
+Title of Document
+`
+    const txt = `
+      ${metaBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+    const result = await parse(txt, 'test-doc.txt')
+    expect(result.data.header.date).toBeNull()
+  })
+})
