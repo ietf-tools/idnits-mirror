@@ -113,8 +113,6 @@ describe('validateDownrefs', () => {
         }
       ])
 
-      fetchMock.dontMockOnce()
-
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
       expect(result).toHaveLength(0)
     })
@@ -131,8 +129,6 @@ describe('validateDownrefs', () => {
           ]
         }
       ])
-
-      fetchMock.dontMockOnce()
 
       const result = await validateDownrefs(doc, { mode: MODES.NORMAL })
 
