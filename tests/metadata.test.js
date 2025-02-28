@@ -7,7 +7,7 @@ import {
   validateObsoleteUpdateRef,
   validateVersion
 } from '../lib/modules/metadata.mjs'
-import { baseXMLDoc } from './fixtures/base-doc.mjs'
+import { baseTXTDoc, baseXMLDoc } from './fixtures/base-doc.mjs'
 import { cloneDeep, set } from 'lodash-es'
 import { DateTime } from 'luxon'
 import fetchMock from 'jest-fetch-mock'
