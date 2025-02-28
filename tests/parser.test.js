@@ -12,7 +12,8 @@ import {
   textWithIPsTXTBlock,
   textWithRFC2119KeywordsTXTBlock,
   RFC2119BoilerplateTXTBlock,
-  RFC8174BoilerplateTXTBlock
+  RFC8174BoilerplateTXTBlock,
+  metaWithoutObsoleteAndUpdatesTXTBlock
 } from './fixtures/txt-blocks/section-blocks.mjs'
 import { parse } from '../lib/parsers/txt.mjs'
 
@@ -521,6 +522,124 @@ describe('Reference is declared, but not used in the document', () => {
     const result = await parse(txt, 'txt')
     expect(result.data.extractedElements.referenceSectionRfc).toHaveLength(0)
     expect(result.data.extractedElements.referenceSectionDraftReferences).toHaveLength(0)
+  })
+})
+
+describe('Parsing author address', () => {
+  test('Parsing author address', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${authorAddressTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors\' Addresses')]))
+  })
+
+  test('Parsing author address with invalid character', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      Authors‘ Addresses
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.content.authorAddress).toEqual(expect.arrayContaining([expect.stringContaining('Authors‘ Addresses')]))
+  })
+})
+
+describe('Parsing obsolete and update metadata', () => {
+  test('Parsing obsolete metadata', async () => {
+    const txt = `
+      ${metaTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.obsoletesRfc).toEqual(['5678', '1234', '2345', '3456'])
+    expect(result.data.extractedElements.updatesRfc).toEqual(['6789', '7890', '8901', '9012'])
+  })
+
+  test('Parsing tetxt without obsolete and update metadata', async () => {
+    const txt = `
+      ${metaWithoutObsoleteAndUpdatesTXTBlock}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+    `
+
+    const result = await parse(txt, 'txt')
+    expect(result.data.extractedElements.obsoletesRfc).toHaveLength(0)
+    expect(result.data.extractedElements.updatesRfc).toHaveLength(0)
+  })
+})
+
+describe('Parsing Category and Intended Status from document header', () => {
+  test('Parses Category correctly', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', 'Category: Standards Track')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.category).toBe('Standards Track')
+  })
+
+  test('Parses Intended Status correctly', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', 'Intended status: Experimental')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.intendedStatus).toBe('Experimental')
+  })
+
+  test('Handles missing status or category', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Intended status: Standards Track', '')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.category).toBeUndefined()
+  })
+
+  test('Handles Unknown Intended status', async () => {
+    const txt = `
+      ${metaTXTBlock.replace('Standards Track', 'Unknown')}
+      ${tableOfContentsTXTBlock}
+      ${abstractWithReferencesTXTBlock}
+      ${introductionTXTBlock}
+      ${securityConsiderationsTXTBlock}
+      ${textWithRFC2119KeywordsTXTBlock}
+    `
+
+    const result = await parse(txt, 'test-document.txt')
+    expect(result.data.header.intendedStatus).toBe('Unknown')
   })
 })
 
